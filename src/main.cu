@@ -1,9 +1,18 @@
+
+#define NUMBER_OF_SPHERES 10
 #include <GLFW/glfw3.h>
+#include "../objects/sphere.cuh"
 //#include "cmake-test-cuda.h"
 
 
 int main(void)
 {
+    Spheres sphere;
+
+    h_allocate_memory_for_spheres(&sphere, NUMBER_OF_SPHERES);
+    h_clean_memory_for_spheres(&sphere, NUMBER_OF_SPHERES);
+
+
     GLFWwindow* window;
 
     /* Initialize the library */
