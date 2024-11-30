@@ -8,3 +8,4 @@ float rand_float(float min, float max)
     float r = random * diff;
     return min + r;
 }
+

@@ -81,3 +81,42 @@ void create_random_spheres(Spheres* spheres, int n)
 	}
 }
 
+void create_test_spheres(Spheres* spheres)
+{
+	spheres->x[0] = 300;
+	spheres->y[0] = 500;
+	spheres->z[0] = 0;
+	spheres->radius[0] = 10;
+	spheres->R[0] = 1;
+	spheres->G[0] = 0;
+	spheres->B[0] = 0;
+	spheres->ka[0] = 1;
+	spheres->kd[0] = 0.25;
+	spheres->ks[0] = 0.25;
+	spheres->alpha[0] = 1;
+
+	spheres->x[1] = -300;
+	spheres->y[1] = 500;
+	spheres->z[1] = 10;
+	spheres->radius[1] = 10;
+	spheres->R[1] = 0;
+	spheres->G[1] = 1;
+	spheres->B[1] = 0;
+	spheres->ka[1] = 1;
+	spheres->kd[1] = 0.25;
+	spheres->ks[1] = 0.25;
+	spheres->alpha[1] = 1;
+
+	spheres->x[2] = 300;
+	spheres->y[2] = 500;
+	spheres->z[2] = 210;
+	spheres->radius[2] = 10;
+	spheres->R[2] = 1;
+	spheres->G[2] = 0;
+	spheres->B[2] = 1;
+	spheres->ka[2] = 1;
+	spheres->kd[2] = 0.25;
+	spheres->ks[2] = 0.25;
+	spheres->alpha[2] = 1;
+}
+
