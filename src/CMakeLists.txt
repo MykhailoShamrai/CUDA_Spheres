@@ -6,7 +6,8 @@ add_executable (CUDA_spheres main.cu
 ../objects/spheres.cu
 ../includes/cuda_helper.cu
 ../objects/light_sources.cu
-../objects/hit_obj.cu)
+../renderers/renderers_helper.cu
+../renderers/kernel_renderer.cu)
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET CUDA_spheres PROPERTY CXX_STANDARD 20)

@@ -8,5 +8,3 @@ struct HitObj
 	float z;
 	int index;
 };
-
-__host__ __device__ HitObj find_intersection(float ray_x, float ray_y, Spheres* spheres, int n);
