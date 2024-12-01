@@ -6,8 +6,8 @@ add_executable (CUDA_spheres main.cu
 ../objects/spheres.cu
 ../includes/cuda_helper.cu
 ../objects/light_sources.cu
-../renderers/renderers_helper.cu
-../renderers/kernel_renderer.cu)
+../renderers/kernel_renderer.cu
+../renderers/cpu_renderer.cu)
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET CUDA_spheres PROPERTY CXX_STANDARD 20)
@@ -33,4 +33,5 @@ target_include_directories(CUDA_spheres PRIVATE ../external/glfw/include)
 target_link_libraries(CUDA_spheres PRIVATE glfw OpenGL::GL)
 include_directories(
     ../includes
-    ../objects)
+    ../objects
+    ../renderers)

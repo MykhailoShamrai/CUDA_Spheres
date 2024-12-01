@@ -10,6 +10,6 @@ if (POLICY CMP0141)
 endif()
 
 # Project Configuration
-project("CUDA_spheres" LANGUAGES C CXX CUDA)
+project("CUDA_spheres" CUDA)
 add_subdirectory(external/glfw)
 add_subdirectory(src)

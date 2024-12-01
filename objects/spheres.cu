@@ -67,26 +67,26 @@ void create_random_spheres(Spheres* spheres, int n)
 {
 	for (int i = 0; i < n; i++)
 	{
-		spheres->x[i] = rand_float(10, 700);
-		spheres->y[i] = rand_float(10, 700);
-		spheres->z[i] = rand_float(10, 700);
-		spheres->radius[i] = rand_float(2, 10);
+		spheres->x[i] = rand_float(-400, 400);
+		spheres->y[i] = rand_float(-300, 300);
+		spheres->z[i] = rand_float(100, 200);
+		spheres->radius[i] = rand_float(10, 20);
 		spheres->R[i] = rand_float(0, 1);
 		spheres->G[i] = rand_float(0, 1);
 		spheres->B[i] = rand_float(0, 1);
-		spheres->ka[i] = rand_float(0, 1);
-		spheres->kd[i] = rand_float(0, 1);
-		spheres->ks[i] = rand_float(0, 1);
-		spheres->alpha[i] = rand_float(0, 1);
+		spheres->ka[i] = rand_float(0, 0.5);
+		spheres->kd[i] = rand_float(0, 0.2);
+		spheres->ks[i] = rand_float(0.4, 0.6);
+		spheres->alpha[i] = 4;
 	}
 }
 
 void create_test_spheres(Spheres* spheres)
 {
-	spheres->x[0] = 300;
-	spheres->y[0] = 500;
-	spheres->z[0] = 0;
-	spheres->radius[0] = 10;
+	spheres->x[0] = -200;
+	spheres->y[0] = 200;
+	spheres->z[0] = 300;
+	spheres->radius[0] = 100;
 	spheres->R[0] = 1;
 	spheres->G[0] = 0;
 	spheres->B[0] = 0;
@@ -95,9 +95,9 @@ void create_test_spheres(Spheres* spheres)
 	spheres->ks[0] = 0.25;
 	spheres->alpha[0] = 1;
 
-	spheres->x[1] = -300;
-	spheres->y[1] = 500;
-	spheres->z[1] = 10;
+	spheres->x[1] = 300;
+	spheres->y[1] = 300;
+	spheres->z[1] = 20;
 	spheres->radius[1] = 10;
 	spheres->R[1] = 0;
 	spheres->G[1] = 1;
@@ -107,8 +107,8 @@ void create_test_spheres(Spheres* spheres)
 	spheres->ks[1] = 0.25;
 	spheres->alpha[1] = 1;
 
-	spheres->x[2] = 300;
-	spheres->y[2] = 500;
+	spheres->x[2] = 100;
+	spheres->y[2] = 400;
 	spheres->z[2] = 210;
 	spheres->radius[2] = 10;
 	spheres->R[2] = 1;
