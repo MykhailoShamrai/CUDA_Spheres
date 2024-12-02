@@ -1,6 +1,6 @@
 #include "renderers_helper.cuh"
 
-__host__ __device__ HitObj find_intersection(float ray_x, float ray_y, Spheres spheres, int n)
+__host__ __device__ HitObj find_intersection(float ray_x, float ray_y, Spheres spheres, int n, float3 camera_pos)
 {
 	HitObj res;
 	res.x = 0;
@@ -10,7 +10,8 @@ __host__ __device__ HitObj find_intersection(float ray_x, float ray_y, Spheres s
 	float ray_z = -1;
 	float radius;
 	float3 A = make_float3(ray_x, ray_y, 0);
-	float3 B = make_float3(0, 0, 1);
+	// Now hardcode the camera position as 0,0,-500
+	float3 B = normalize(A - camera_pos);
 	float3 C;
 	// I have unit vector for B, so a is 1
 	float a = 1.0f;
@@ -27,12 +28,11 @@ __host__ __device__ HitObj find_intersection(float ray_x, float ray_y, Spheres s
 		radius = spheres.radius[i];
 		b = 2 * dot(B, A - C);
 		float tmp = dot(A - C, A - C);
-		float rr = radius * radius;
 		c = dot(A - C, A - C) - pow(radius, 2);
 		d = b * b - 4 * c;
 
-		if (ray_x == -199 && ray_y == 200)
-			printf("%f %f %f %f %f\n", b, c, d, tmp, rr);
+		//if (ray_x == -199 && ray_y == 200)
+		//	printf("%f %f %f %f\n", b, c, d, tmp);
 		if (d >= 0)
 		{
 			step1 = (-b - sqrt(d)) / 2;

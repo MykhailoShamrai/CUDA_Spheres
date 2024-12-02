@@ -7,8 +7,8 @@
 #include <cuda_runtime.h>
 
 
-#define NUMBER_OF_SPHERES 10
-#define NUMBER_OF_LIGHTS 5
+#define NUMBER_OF_SPHERES 500
+#define NUMBER_OF_LIGHTS 100
 #define WIDTH 1200
 #define HEIGHT 900
 
@@ -52,6 +52,7 @@ int main(void)
     checkCudaErrors(cudaMemcpy(d_lights.G, lights.G, NUMBER_OF_LIGHTS * sizeof(float), cudaMemcpyHostToDevice));
     checkCudaErrors(cudaMemcpy(d_lights.B, lights.B, NUMBER_OF_LIGHTS * sizeof(float), cudaMemcpyHostToDevice));
 
+    float3 camera_pos = make_float3(0, 0, - WIDTH / 2);
 
 
     unsigned char* h_bitmap = (unsigned char*)malloc(WIDTH * HEIGHT * 3  * sizeof(unsigned char));
@@ -64,15 +65,10 @@ int main(void)
     dim3 blocks(dim_blocks_x, dim_blocks_y);
     dim3 threads(THREAD_NUMBER, THREAD_NUMBER);
 
-    refresh_bitmap << <blocks, threads >> > (d_bitmap, d_spheres, NUMBER_OF_SPHERES, d_lights, NUMBER_OF_LIGHTS, WIDTH, HEIGHT);
-    checkCudaErrors(cudaGetLastError());
-    cudaDeviceSynchronize();
-    //checkCudaErrors(cudaDeviceSynchronize());
-    
-    checkCudaErrors(cudaMemcpy(h_bitmap, d_bitmap, WIDTH * HEIGHT * 3 * sizeof(unsigned char), cudaMemcpyDeviceToHost));
 
 
-    //refresh_bitmap_cpu(h_bitmap, spheres, NUMBER_OF_SPHERES, lights, NUMBER_OF_LIGHTS, WIDTH, HEIGHT);
+
+    //refresh_bitmap_cpu(h_bitmap, spheres, NUMBER_OF_SPHERES, lights, NUMBER_OF_LIGHTS, WIDTH, HEIGHT, camera_pos);
 
 
     /* Initialize the library */
@@ -95,12 +91,26 @@ int main(void)
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
+    refresh_bitmap << <blocks, threads >> > (d_bitmap, d_spheres, NUMBER_OF_SPHERES, d_lights, NUMBER_OF_LIGHTS, WIDTH, HEIGHT, camera_pos);
+    checkCudaErrors(cudaGetLastError());
+    //cudaDeviceSynchronize();
+    checkCudaErrors(cudaDeviceSynchronize());
+
+    checkCudaErrors(cudaMemcpy(h_bitmap, d_bitmap, WIDTH * HEIGHT * 3 * sizeof(unsigned char), cudaMemcpyDeviceToHost));
 
 
 
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
+        //refresh_bitmap << <blocks, threads >> > (d_bitmap, d_spheres, NUMBER_OF_SPHERES, d_lights, NUMBER_OF_LIGHTS, WIDTH, HEIGHT);
+        //checkCudaErrors(cudaGetLastError());
+        //cudaDeviceSynchronize();
+        ////checkCudaErrors(cudaDeviceSynchronize());
+        //
+        //checkCudaErrors(cudaMemcpy(h_bitmap, d_bitmap, WIDTH * HEIGHT * 3 * sizeof(unsigned char), cudaMemcpyDeviceToHost));
+
+
         /* Render here */
         glClear(GL_COLOR_BUFFER_BIT);
 

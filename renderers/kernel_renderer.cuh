@@ -6,4 +6,4 @@
 #include "../objects/hit_obj.cuh"
 
 __global__ void refresh_bitmap(unsigned char* bitmap, Spheres spheres,
-	int ns, LightSources lights, int nl, int width, int heith);
+	int ns, LightSources lights, int nl, int width, int heith, float3 camera_pos);
