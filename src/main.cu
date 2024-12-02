@@ -1,16 +1,14 @@
 
 #include <GLFW/glfw3.h>
-//#include "../objects/spheres.cuh"
 #include "../includes/cuda_helper.cuh"
 #include "../renderers/kernel_renderer.cuh"
 #include "../renderers/cpu_renderer.cuh"
 #include <stdlib.h>
 #include <cuda_runtime.h>
 
-//#include "cmake-test-cuda.h"
 
 #define NUMBER_OF_SPHERES 10
-#define NUMBER_OF_LIGHTS 10
+#define NUMBER_OF_LIGHTS 5
 #define WIDTH 1200
 #define HEIGHT 900
 
@@ -19,25 +17,14 @@
 
 int main(void)
 {
-    Spheres sphere;
+    Spheres spheres;
     Spheres d_spheres;
     LightSources lights;
     LightSources d_lights;
-
     
-    
-    //cudaMalloc((void**)&d_spheres, sizeof(Spheres));
-    //cudaMalloc((void**)&d_lights, sizeof(LightSources));
-    //
-    //
-    //checkCudaErrors(cudaMemcpy(&d_lights, &lights, sizeof(LightSources), cudaMemcpyHostToDevice));
-    //checkCudaErrors(cudaMemcpy(&d_spheres, &sphere, sizeof(LightSources), cudaMemcpyHostToDevice));
-
-
-    
-    h_allocate_memory_for_spheres(&sphere, NUMBER_OF_SPHERES);
-    //create_test_spheres(&sphere);
-    create_random_spheres(&sphere, NUMBER_OF_SPHERES);
+    h_allocate_memory_for_spheres(&spheres, NUMBER_OF_SPHERES);
+    //create_test_spheres(&spheres);
+    create_random_spheres(&spheres, NUMBER_OF_SPHERES);
 
     h_allocate_memory_for_light_sources(&lights, NUMBER_OF_LIGHTS);
     create_random_light_sources(&lights, NUMBER_OF_LIGHTS);
@@ -46,16 +33,17 @@ int main(void)
     d_allocate_memory_for_spheres(&d_spheres, NUMBER_OF_SPHERES);
     d_allocate_memory_for_light_sources(&d_lights, NUMBER_OF_LIGHTS);
 
-    checkCudaErrors(cudaMemcpy(d_spheres.x, sphere.x, NUMBER_OF_SPHERES * sizeof(float), cudaMemcpyHostToDevice));
-    checkCudaErrors(cudaMemcpy(d_spheres.y, sphere.y, NUMBER_OF_SPHERES * sizeof(float), cudaMemcpyHostToDevice));
-    checkCudaErrors(cudaMemcpy(d_spheres.z, sphere.z, NUMBER_OF_SPHERES * sizeof(float), cudaMemcpyHostToDevice));
-    checkCudaErrors(cudaMemcpy(d_spheres.ka, sphere.ka, NUMBER_OF_SPHERES * sizeof(float), cudaMemcpyHostToDevice));
-    checkCudaErrors(cudaMemcpy(d_spheres.ks, sphere.ks, NUMBER_OF_SPHERES * sizeof(float), cudaMemcpyHostToDevice));
-    checkCudaErrors(cudaMemcpy(d_spheres.kd, sphere.kd, NUMBER_OF_SPHERES * sizeof(float), cudaMemcpyHostToDevice));
-    checkCudaErrors(cudaMemcpy(d_spheres.R, sphere.R, NUMBER_OF_SPHERES * sizeof(float), cudaMemcpyHostToDevice));
-    checkCudaErrors(cudaMemcpy(d_spheres.G, sphere.G, NUMBER_OF_SPHERES * sizeof(float), cudaMemcpyHostToDevice));
-    checkCudaErrors(cudaMemcpy(d_spheres.B, sphere.B, NUMBER_OF_SPHERES * sizeof(float), cudaMemcpyHostToDevice));
-    checkCudaErrors(cudaMemcpy(d_spheres.alpha, sphere.alpha, NUMBER_OF_SPHERES * sizeof(float), cudaMemcpyHostToDevice));
+    checkCudaErrors(cudaMemcpy(d_spheres.x, spheres.x, NUMBER_OF_SPHERES * sizeof(float), cudaMemcpyHostToDevice));
+    checkCudaErrors(cudaMemcpy(d_spheres.y, spheres.y, NUMBER_OF_SPHERES * sizeof(float), cudaMemcpyHostToDevice));
+    checkCudaErrors(cudaMemcpy(d_spheres.z, spheres.z, NUMBER_OF_SPHERES * sizeof(float), cudaMemcpyHostToDevice));
+    checkCudaErrors(cudaMemcpy(d_spheres.ka, spheres.ka, NUMBER_OF_SPHERES * sizeof(float), cudaMemcpyHostToDevice));
+    checkCudaErrors(cudaMemcpy(d_spheres.ks, spheres.ks, NUMBER_OF_SPHERES * sizeof(float), cudaMemcpyHostToDevice));
+    checkCudaErrors(cudaMemcpy(d_spheres.kd, spheres.kd, NUMBER_OF_SPHERES * sizeof(float), cudaMemcpyHostToDevice));
+    checkCudaErrors(cudaMemcpy(d_spheres.R, spheres.R, NUMBER_OF_SPHERES * sizeof(float), cudaMemcpyHostToDevice));
+    checkCudaErrors(cudaMemcpy(d_spheres.G, spheres.G, NUMBER_OF_SPHERES * sizeof(float), cudaMemcpyHostToDevice));
+    checkCudaErrors(cudaMemcpy(d_spheres.B, spheres.B, NUMBER_OF_SPHERES * sizeof(float), cudaMemcpyHostToDevice));
+    checkCudaErrors(cudaMemcpy(d_spheres.alpha, spheres.alpha, NUMBER_OF_SPHERES * sizeof(float), cudaMemcpyHostToDevice));
+    checkCudaErrors(cudaMemcpy(d_spheres.radius, spheres.radius, NUMBER_OF_SPHERES * sizeof(float), cudaMemcpyHostToDevice));
 
     checkCudaErrors(cudaMemcpy(d_lights.x, lights.x, NUMBER_OF_LIGHTS * sizeof(float), cudaMemcpyHostToDevice));
     checkCudaErrors(cudaMemcpy(d_lights.y, lights.y, NUMBER_OF_LIGHTS * sizeof(float), cudaMemcpyHostToDevice));
@@ -66,9 +54,9 @@ int main(void)
 
 
 
-    GLubyte* h_bitmap = (GLubyte*)malloc(WIDTH * HEIGHT * 3  * sizeof(GLubyte));
-    GLubyte* d_bitmap;
-    checkCudaErrors(cudaMalloc((void**)&d_bitmap, WIDTH * HEIGHT * 3 * sizeof(GLubyte)));
+    unsigned char* h_bitmap = (unsigned char*)malloc(WIDTH * HEIGHT * 3  * sizeof(unsigned char));
+    unsigned char* d_bitmap;
+    checkCudaErrors(cudaMalloc((void**)&d_bitmap, WIDTH * HEIGHT * 3 * sizeof(unsigned char)));
 
     int dim_blocks_x = (WIDTH + THREAD_NUMBER - 1) / THREAD_NUMBER;
     int dim_blocks_y = (HEIGHT + THREAD_NUMBER - 1) / THREAD_NUMBER;
@@ -81,10 +69,10 @@ int main(void)
     cudaDeviceSynchronize();
     //checkCudaErrors(cudaDeviceSynchronize());
     
-    checkCudaErrors(cudaMemcpy(h_bitmap, d_bitmap, WIDTH * HEIGHT * 3 * sizeof(GLubyte), cudaMemcpyDeviceToHost));
+    checkCudaErrors(cudaMemcpy(h_bitmap, d_bitmap, WIDTH * HEIGHT * 3 * sizeof(unsigned char), cudaMemcpyDeviceToHost));
 
 
-    //refresh_bitmap_cpu(h_bitmap, sphere, NUMBER_OF_SPHERES, lights, NUMBER_OF_LIGHTS, WIDTH, HEIGHT);
+    //refresh_bitmap_cpu(h_bitmap, spheres, NUMBER_OF_SPHERES, lights, NUMBER_OF_LIGHTS, WIDTH, HEIGHT);
 
 
     /* Initialize the library */
@@ -132,8 +120,6 @@ int main(void)
     d_clean_memory_for_spheres(&d_spheres);
     h_clean_memory_for_light_sources(&lights);
     d_clean_memory_for_light_sources(&d_lights);
-    h_clean_memory_for_spheres(&sphere);
-    //checkCudaErrors(cudaFree(&d_spheres));
-    //checkCudaErrors(cudaFree(&d_lights));
+    h_clean_memory_for_spheres(&spheres);
     return 0;
 }

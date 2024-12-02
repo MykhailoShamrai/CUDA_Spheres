@@ -2,12 +2,38 @@
 # project specific logic here.
 #
 
+add_library(renderers_helper STATIC 
+    ../renderers/renderers_helper.cu
+    ../renderers/renderers_helper.cuh
+)
+set_target_properties(renderers_helper PROPERTIES
+    CUDA_SEPARABLE_COMPILATION ON
+)
+
+add_library(cpu_renderer STATIC ../renderers/cpu_renderer.cuh ../renderers/cpu_renderer.cu)
+
+set_target_properties(cpu_renderer PROPERTIES
+    CUDA_SEPARABLE_COMPILATION ON
+)
+
+target_link_libraries(cpu_renderer PRIVATE renderers_helper)
+
+add_library(kernel_renderer STATIC ../renderers/kernel_renderer.cuh ../renderers/kernel_renderer.cu)
+
+set_target_properties(kernel_renderer PROPERTIES
+    CUDA_SEPARABLE_COMPILATION ON
+)
+
+target_link_libraries(kernel_renderer PRIVATE renderers_helper)
+
 add_executable (CUDA_spheres main.cu
 ../objects/spheres.cu
 ../includes/cuda_helper.cu
 ../objects/light_sources.cu
-../renderers/kernel_renderer.cu
-../renderers/cpu_renderer.cu)
+#../renderers/kernel_renderer.cu
+)
+
+target_link_libraries(CUDA_spheres PRIVATE cpu_renderer kernel_renderer renderers_helper)
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET CUDA_spheres PROPERTY CXX_STANDARD 20)
