@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\Mike\source\repos\CUDA_spheres\CMakeFiles\35337154208c273faceae5be1080140f\update_mappings.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\Mike\source\repos\CUDA_spheres\external\glfw\src\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="C:\Users\Mike\source\repos\CUDA_spheres\external\glfw\src\mappings.h.in">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="C:\Users\Mike\source\repos\CUDA_spheres\external\glfw\CMake\GenerateMappings.cmake" />
+    <None Include="C:\Users\Mike\source\repos\CUDA_spheres\external\glfw\src\CMakeFiles\update_mappings" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{CDCEF1EF-0EC7-313A-B22D-79BDCD83E1B1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{C73E972C-1203-3673-B65C-696CB69443F5}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
