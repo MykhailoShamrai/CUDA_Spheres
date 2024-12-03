@@ -30,7 +30,7 @@ add_executable (CUDA_spheres main.cu
 ../objects/spheres.cu
 ../includes/cuda_helper.cu
 ../objects/light_sources.cu
-#../renderers/kernel_renderer.cu
+camera_helpers.cu
 )
 
 target_link_libraries(CUDA_spheres PRIVATE cpu_renderer kernel_renderer renderers_helper)

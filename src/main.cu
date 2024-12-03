@@ -5,12 +5,13 @@
 #include "../renderers/cpu_renderer.cuh"
 #include <stdlib.h>
 #include <cuda_runtime.h>
+#include "camera_helpers.cuh"
 
 
-#define NUMBER_OF_SPHERES 500
-#define NUMBER_OF_LIGHTS 100
+#define NUMBER_OF_SPHERES 1000
+#define NUMBER_OF_LIGHTS 10
 #define WIDTH 1200
-#define HEIGHT 900
+#define HEIGHT 800
 
 #define THREAD_NUMBER 16
 
@@ -91,25 +92,46 @@ int main(void)
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    refresh_bitmap << <blocks, threads >> > (d_bitmap, d_spheres, NUMBER_OF_SPHERES, d_lights, NUMBER_OF_LIGHTS, WIDTH, HEIGHT, camera_pos);
-    checkCudaErrors(cudaGetLastError());
-    //cudaDeviceSynchronize();
-    checkCudaErrors(cudaDeviceSynchronize());
+    //refresh_bitmap << <blocks, threads >> > (d_bitmap, d_spheres, NUMBER_OF_SPHERES, d_lights, NUMBER_OF_LIGHTS, WIDTH, HEIGHT, camera_pos);
+    //checkCudaErrors(cudaGetLastError());
+    ////cudaDeviceSynchronize();
+    //checkCudaErrors(cudaDeviceSynchronize());
+    //
+    //checkCudaErrors(cudaMemcpy(h_bitmap, d_bitmap, WIDTH * HEIGHT * 3 * sizeof(unsigned char), cudaMemcpyDeviceToHost));
 
-    checkCudaErrors(cudaMemcpy(h_bitmap, d_bitmap, WIDTH * HEIGHT * 3 * sizeof(unsigned char), cudaMemcpyDeviceToHost));
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
 
 
+    cudaEvent_t start_mem, stop_mem;
+    cudaEventCreate(&start_mem);
+    cudaEventCreate(&stop_mem);
 
+
+    float3 new_camera_pos = camera_pos;
+    int angle = 0;
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
-        //refresh_bitmap << <blocks, threads >> > (d_bitmap, d_spheres, NUMBER_OF_SPHERES, d_lights, NUMBER_OF_LIGHTS, WIDTH, HEIGHT);
-        //checkCudaErrors(cudaGetLastError());
+        cudaEventRecord(start);
+        refresh_bitmap << <blocks, threads >> > (d_bitmap, d_spheres, NUMBER_OF_SPHERES, d_lights, NUMBER_OF_LIGHTS, WIDTH, HEIGHT, camera_pos);
+        checkCudaErrors(cudaGetLastError());
         //cudaDeviceSynchronize();
-        ////checkCudaErrors(cudaDeviceSynchronize());
+        checkCudaErrors(cudaDeviceSynchronize());
         //
-        //checkCudaErrors(cudaMemcpy(h_bitmap, d_bitmap, WIDTH * HEIGHT * 3 * sizeof(unsigned char), cudaMemcpyDeviceToHost));
+        cudaEventRecord(stop);
 
+
+        cudaEventRecord(start_mem);
+        checkCudaErrors(cudaMemcpy(h_bitmap, d_bitmap, WIDTH * HEIGHT * 3 * sizeof(unsigned char), cudaMemcpyDeviceToHost));
+        cudaEventRecord(stop_mem);
+
+        float elapsed_time;
+        cudaEventElapsedTime(&elapsed_time, start, stop);
+        printf("time for generation of frame: %f\n", elapsed_time);
+        cudaEventElapsedTime(&elapsed_time, start_mem, stop_mem);
+        printf("time for memory copying: %f\n", elapsed_time);
 
         /* Render here */
         glClear(GL_COLOR_BUFFER_BIT);
@@ -124,6 +146,12 @@ int main(void)
     glfwTerminate();
     
     
+
+    // cleaning 
+    cudaEventDestroy(start);
+    cudaEventDestroy(stop);
+    cudaEventDestroy(start_mem);
+    cudaEventDestroy(stop_mem);
 
     free(h_bitmap);
     checkCudaErrors(cudaFree(d_bitmap));

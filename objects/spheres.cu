@@ -67,9 +67,9 @@ void create_random_spheres(Spheres* spheres, int n)
 {
 	for (int i = 0; i < n; i++)
 	{
-		spheres->x[i] = rand_float(-400, 400);
-		spheres->y[i] = rand_float(-300, 300);
-		spheres->z[i] = rand_float(30, 50);
+		spheres->x[i] = rand_float(-1000, 1000);
+		spheres->y[i] = rand_float(-1000, 1000);
+		spheres->z[i] = rand_float(-100, 100);
 		spheres->radius[i] = rand_float(10, 20);
 		spheres->R[i] = rand_float(0, 1);
 		spheres->G[i] = rand_float(0, 1);

@@ -11,6 +11,7 @@ __global__ void refresh_bitmap(unsigned char* bitmap, Spheres spheres, int ns,
 	int j = threadIdx.y + blockIdx.y * blockDim.y;
 	if (i >= width || j >= heith)
 		return;
+
 	// here can be an error
 	float ii = i - width / 2;
 	float jj = (j - heith / 2);

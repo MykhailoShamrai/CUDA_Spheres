@@ -26,9 +26,10 @@ __host__ __device__ HitObj find_intersection(float ray_x, float ray_y, Spheres s
 		//if (ray_x == -199 && ray_y == 200)
 		//	printf("%f %f %f\n%f %f %f\n %f %f %f\n", A.x, A.y, A.z, B.x, B.y, B.z, C.x, C.y, C.z);
 		radius = spheres.radius[i];
-		b = 2 * dot(B, A - C);
-		float tmp = dot(A - C, A - C);
-		c = dot(A - C, A - C) - pow(radius, 2);
+		float3 A_C = A - C;
+		b = 2 * dot(B, A_C);
+		float tmp = dot(A_C, A_C);
+		c = dot(A_C, A_C) - radius * radius;
 		d = b * b - 4 * c;
 
 		//if (ray_x == -199 && ray_y == 200)
@@ -38,7 +39,7 @@ __host__ __device__ HitObj find_intersection(float ray_x, float ray_y, Spheres s
 			step1 = (-b - sqrt(d)) / 2;
 			step2 = (-b + sqrt(d)) / 2;
 			// whole wphere is behind camera
-			if (step1 >= 0 && step2 >= 0 && step1 < res.z)
+			if (step1 >= 0 && step1 < res.z)
 			{
 				res.z = step1;
 				res.index = i;
@@ -77,6 +78,9 @@ __host__ __device__ float3 find_color_for_hit(HitObj hit, Spheres spheres, Light
 	float3 R;
 	float LN_dot_prod;
 	float RV_dot_prod;
+	float kd = spheres.kd[hit.index];
+	float ks = spheres.ks[hit.index];
+	float alpha = spheres.alpha[hit.index];
 	float3 color_of_pixel = make_float3(0, 0, 0);
 	for (int k = 0; k < nl; k++)
 	{
@@ -94,7 +98,7 @@ __host__ __device__ float3 find_color_for_hit(HitObj hit, Spheres spheres, Light
 		LN_dot_prod = LN_dot_prod >= 0 ? LN_dot_prod : 0;
 		RV_dot_prod = RV_dot_prod >= 0 ? RV_dot_prod : 0;
 
-		color_of_pixel += spheres.kd[hit.index] * LN_dot_prod * sphere_color + spheres.ks[hit.index] * pow(RV_dot_prod, spheres.alpha[hit.index]) * light_color;
+		color_of_pixel += kd * LN_dot_prod * sphere_color + ks * pow(RV_dot_prod, alpha) * light_color;
 	}
 
 	color_of_pixel += spheres.ka[hit.index] * (*ia);
