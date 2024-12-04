@@ -14,34 +14,13 @@ __global__ void refresh_bitmap(unsigned char* bitmap, Spheres spheres, int ns,
 	if (i >= width || j >= heith)
 		return;
 
-	// The idea is to find on the start of each frame generation, which sferes can probably be visible on the block's part of the screen
-
-	//int blockX = blockIdx.x;
-	//int blockY = blockIdx.y;
-	// Find the corners to bound block's part of the screen
-	//int x_min = 0 + blockIdx.x * blockDim.x;
-	//int y_max = 0 + blockIdx.y * blockDim.y;
-	//int x_max = blockDim.x + blockIdx.x * blockDim.x;
-	//int y_max = blockDim.y + blockIdx.y * blockDim.y;
-
-	// Now each thread must take one sphere and specify if it has chance to be present in this part of a screen;
-	// For that purpose I need to have some dinamically alocated structure, like list or I don't know
-
-	// Change to float after tests
      __shared__ float array[MAX];
-	//float* x = array;
-	//float* y = &x[ns];
-	//float* z = &y[ns];
-	//float* radius = &z[ns];
+
 
 	int is = threadIdx.x + threadIdx.y * blockDim.x;
 	int iss = is * 4;
 	while (is < ns)
 	{
-		//x[is] = spheres.x[is];
-		//y[is] = spheres.y[is];
-		//z[is] = spheres.z[is];
-		//radius[is] = spheres.radius[is];
 		array[iss] = spheres.x[is];
 		array[iss + 1] = spheres.y[is];
 		array[iss + 2] = spheres.z[is];
@@ -80,10 +59,10 @@ __global__ void refresh_bitmap_ver2(unsigned char* bitmap, Spheres spheres,
 	//int blockY = blockIdx.y;
 	// Find the corners to bound block's part of the screen
 	int x_min = 0 + blockIdx.x * blockDim.x - width / 2;
-	int y_min = 0 + blockIdx.y * blockDim.y - heith / 2;
+	int y_max = -(0 + blockIdx.y * blockDim.y - heith / 2);
 	// Here it isn't always true
 	int x_max = blockDim.x + blockIdx.x * blockDim.x - width / 2;
-	int y_max = blockDim.y + blockIdx.y * blockDim.y - heith / 2;
+	int y_min = -(blockDim.y + blockIdx.y * blockDim.y - heith / 2);
 
 	//printf("%d, %d, %d, %d\n", x_min, y_min, x_max, y_max);
 
@@ -117,7 +96,7 @@ __global__ void refresh_bitmap_ver2(unsigned char* bitmap, Spheres spheres,
 
 	// here can be an error
 	float ii = i - width / 2;
-	float jj = (j - heith / 2);
+	float jj = -(j - heith / 2);
 	HitObj hit = find_intersection_gpu_ver3(ii, jj, spheres, array, ns, camera_pos, is);
 	float3 ia = make_float3(1, 1, 1);
 	float3 color = find_color_for_hit(hit, spheres, lights, nl, &ia, ii, jj);

@@ -9,7 +9,7 @@
 
 
 #define NUMBER_OF_SPHERES 1000
-#define NUMBER_OF_LIGHTS 200
+#define NUMBER_OF_LIGHTS 20
 #define WIDTH 1600
 #define HEIGHT 800
 

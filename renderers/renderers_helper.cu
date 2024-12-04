@@ -151,31 +151,38 @@ __device__ HitObj find_intersection_gpu_ver3(float ray_x, float ray_y, Spheres s
 	float d;
 	float step1;
 	float step2;
-	for (int i = 0; i < n; i++)
+	int i = 0;
+	while (i < n && !array[i])
+		i++;
+	for (; i < n;)
 	{
-		if (array[i])
+		//printf("%d\n", array[i]);
+		//if (!array[i])
+		//	continue;
+		C = make_float3(spheres.x[i], spheres.y[i], spheres.z[i]);
+		radius = spheres.radius[i];
+		float3 A_C = A - C;
+		b = 2 * dot(B, A_C);
+		float tmp = dot(A_C, A_C);
+		c = dot(A_C, A_C) - radius * radius;
+		d = b * b - 4 * c;
+		if (d >= 0)
 		{
-			//printf("%d\n", array[i]);
-			C = make_float3(spheres.x[i], spheres.y[i], spheres.z[i]);
-			radius = spheres.radius[i];
-			float3 A_C = A - C;
-			b = 2 * dot(B, A_C);
-			float tmp = dot(A_C, A_C);
-			c = dot(A_C, A_C) - radius * radius;
-			d = b * b - 4 * c;
-			if (d >= 0)
-			{
-				float sqrt_d = sqrtf(d);
-				float inv2 = 0.5f;
-				float step1 = (-b - sqrt_d) * inv2;
-				float step2 = (-b + sqrt_d) * inv2;
-				// whole wphere is behind camera
+			float sqrt_d = sqrtf(d);
+			float inv2 = 0.5f;
+			float step1 = (-b - sqrt_d) * inv2;
+			float step2 = (-b + sqrt_d) * inv2;
+			// whole wphere is behind camera
 
-				bool var_a = step1 < 0 && step2 >= 0;
-				bool var_b = step1 >= 0 && step1 < res.z;
-				res.z = var_a ? FLT_MAX : var_b ? step1 : res.z;
-				res.index = var_a ? -1 : var_b ? i : res.index;
-			}
+			bool var_a = step1 < 0 && step2 >= 0;
+			bool var_b = step1 >= 0 && step1 < res.z;
+			res.z = var_a ? FLT_MAX : var_b ? step1 : res.z;
+			res.index = var_a ? -1 : var_b ? i : res.index;
+		}
+		i++;
+		while (array[i] != 1 && i < n)
+		{
+			i++;
 		}
 	}
 	return res;
@@ -300,27 +307,28 @@ __device__ void check_if_sphere_is_visible_for_block(
 
 	// Compute perspective projection
 	float dz = z - camera_pos.z; // Distance to the camera
-	
+	float cam = fabs(camera_pos.z);
+	float x_min_rad = x - radius;
+	float x_pl_rad = x + radius;
+	float y_min_rad = y - radius;
+	float y_pl_rad = y + radius;
+	float dz_min_rad = dz - radius;
+	float dz_pl_rad = dz + radius;
 
 
-	float proj_x_min = (x - radius) * fabs(camera_pos.z) / dz;
-	float proj_x_max = (x + radius) * fabs(camera_pos.z) / dz;
-	float proj_y_min = (y - radius) * fabs(camera_pos.z) / dz;
-	float proj_y_max = (y + radius) * fabs(camera_pos.z) / dz;
+	float proj_x_min = x_min_rad < 0 ? x_min_rad * cam / dz_min_rad : x_min_rad * cam / dz_pl_rad;
+	float proj_x_max = x_pl_rad < 0 ? x_pl_rad * cam / dz_pl_rad : x_pl_rad * cam / dz_min_rad;
+	float proj_y_min = y_min_rad < 0 ? y_min_rad * cam / dz_min_rad : y_min_rad * cam / dz_pl_rad;
+	float proj_y_max = y_pl_rad < 0 ? y_pl_rad * cam / dz_pl_rad : y_pl_rad * cam / dz_min_rad;
 
-	proj_x_min = min(proj_x_max, proj_x_min);
-	proj_y_min = min(proj_y_max, proj_y_min);
 
 	bool x_overlap = !(proj_x_max <= x_min || proj_x_min >= x_max);
 	bool y_overlap = !(proj_y_max <= y_min || proj_y_min >= y_max);
-
+	
 	bool x_containing = (proj_x_min <= x_min && proj_x_max >= x_max);
 	bool y_containing = (proj_y_min <= y_min && proj_y_max >= y_max);
-
+	
 	array[index] = (x_overlap && y_overlap) || (x_containing && y_overlap) ||
 		(x_overlap && y_containing) || (x_containing && y_containing) ? 1 : 0;
-
-	// Debug output
-	//printf("Index: %d, Visible: %d, ProjX: [%f, %f], ProjY: [%f, %f], ScreenX: [%d, %d], ScreenY: [%d, %d]\n",
-	//	index, array[index], proj_x_min, proj_x_max, proj_y_min, proj_y_max, x_min, x_max, y_min, y_max);
+	
 }
