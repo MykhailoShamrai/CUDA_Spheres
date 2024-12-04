@@ -9,8 +9,8 @@
 
 
 #define NUMBER_OF_SPHERES 1000
-#define NUMBER_OF_LIGHTS 100
-#define WIDTH 1200
+#define NUMBER_OF_LIGHTS 10
+#define WIDTH 1600
 #define HEIGHT 800
 
 #define THREAD_NUMBER 16
@@ -44,6 +44,16 @@ int main(void)
         unrotated_z_spheres[i] = spheres.z[i];
     }
 
+    float* unrotated_x_lights = (float*)malloc(sizeof(float) * NUMBER_OF_LIGHTS);
+    float* unrotated_y_lights = (float*)malloc(sizeof(float) * NUMBER_OF_LIGHTS);
+    float* unrotated_z_lights = (float*)malloc(sizeof(float) * NUMBER_OF_LIGHTS);
+    for (int i = 0; i < NUMBER_OF_LIGHTS; i++)
+    {
+        unrotated_x_lights[i] = lights.x[i];
+        unrotated_y_lights[i] = lights.y[i];
+        unrotated_z_lights[i] = lights.z[i];
+    }
+
 
     checkCudaErrors(cudaMemcpy(d_spheres.x, spheres.x, NUMBER_OF_SPHERES * sizeof(float), cudaMemcpyHostToDevice));
     checkCudaErrors(cudaMemcpy(d_spheres.y, spheres.y, NUMBER_OF_SPHERES * sizeof(float), cudaMemcpyHostToDevice));
@@ -71,19 +81,7 @@ int main(void)
     unsigned char* d_bitmap;
     checkCudaErrors(cudaMalloc((void**)&d_bitmap, WIDTH * HEIGHT * 3 * sizeof(unsigned char)));
 
-    int dim_blocks_x = (WIDTH + THREAD_NUMBER - 1) / THREAD_NUMBER;
-    int dim_blocks_y = (HEIGHT + THREAD_NUMBER - 1) / THREAD_NUMBER;
 
-    dim3 blocks(dim_blocks_x, dim_blocks_y);
-    dim3 threads(THREAD_NUMBER, THREAD_NUMBER);
-
-
-
-
-    //refresh_bitmap_cpu(h_bitmap, spheres, NUMBER_OF_SPHERES, lights, NUMBER_OF_LIGHTS, WIDTH, HEIGHT, camera_pos);
-
-
-    /* Initialize the library */
     if (!glfwInit())
         return -1;
 
@@ -103,21 +101,21 @@ int main(void)
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    //refresh_bitmap << <blocks, threads >> > (d_bitmap, d_spheres, NUMBER_OF_SPHERES, d_lights, NUMBER_OF_LIGHTS, WIDTH, HEIGHT, camera_pos);
-    //checkCudaErrors(cudaGetLastError());
-    ////cudaDeviceSynchronize();
-    //checkCudaErrors(cudaDeviceSynchronize());
-    //
-    //checkCudaErrors(cudaMemcpy(h_bitmap, d_bitmap, WIDTH * HEIGHT * 3 * sizeof(unsigned char), cudaMemcpyDeviceToHost));
 
+    // Initialisation of timers
     cudaEvent_t start, stop;
     cudaEventCreate(&start);
     cudaEventCreate(&stop);
-
-
     cudaEvent_t start_mem, stop_mem;
     cudaEventCreate(&start_mem);
     cudaEventCreate(&stop_mem);
+
+    // 
+    int dim_blocks_x = (WIDTH + THREAD_NUMBER - 1) / THREAD_NUMBER;
+    int dim_blocks_y = (HEIGHT + THREAD_NUMBER - 1) / THREAD_NUMBER;
+
+    dim3 blocks(dim_blocks_x, dim_blocks_y);
+    dim3 threads(THREAD_NUMBER, THREAD_NUMBER);
 
 
     float3 new_camera_pos = camera_pos;
@@ -126,25 +124,24 @@ int main(void)
     while (!glfwWindowShouldClose(window))
     {
         cudaEventRecord(start);
-        //unsigned shmem_size = sizeof(float) * 4 * NUMBER_OF_SPHERES;
-        //refresh_bitmap << <blocks, threads, shmem_size>> > (d_bitmap, d_spheres, NUMBER_OF_SPHERES, d_lights, NUMBER_OF_LIGHTS, WIDTH, HEIGHT, camera_pos);
-        
-        rotate_positions_spheres_y(spheres.x, spheres.z, unrotated_x_spheres, unrotated_z_spheres, angle, NUMBER_OF_SPHERES);
-        
+        rotate_positions(spheres.x, spheres.z, unrotated_x_spheres, unrotated_z_spheres, angle, NUMBER_OF_SPHERES);
+        rotate_positions(spheres.y, spheres.z, unrotated_y_spheres, spheres.z, angle, NUMBER_OF_SPHERES);
+
         cudaEventRecord(start_mem);
         checkCudaErrors(cudaMemcpy(d_spheres.x, spheres.x, NUMBER_OF_SPHERES * sizeof(float), cudaMemcpyHostToDevice));
         checkCudaErrors(cudaMemcpy(d_spheres.y, spheres.y, NUMBER_OF_SPHERES * sizeof(float), cudaMemcpyHostToDevice));
         checkCudaErrors(cudaMemcpy(d_spheres.z, spheres.z, NUMBER_OF_SPHERES * sizeof(float), cudaMemcpyHostToDevice));
+        //checkCudaErrors(cudaMemcpy(d_lights.x, lights.x, NUMBER_OF_LIGHTS * sizeof(float), cudaMemcpyHostToDevice));
+        //checkCudaErrors(cudaMemcpy(d_lights.y, lights.y, NUMBER_OF_LIGHTS * sizeof(float), cudaMemcpyHostToDevice));
+        //checkCudaErrors(cudaMemcpy(d_lights.z, lights.z, NUMBER_OF_LIGHTS * sizeof(float), cudaMemcpyHostToDevice));
+
         cudaEventRecord(stop_mem);
 
         unsigned shmem_size = sizeof(unsigned char) * NUMBER_OF_SPHERES;
-        refresh_bitmap_ver2 << <blocks, threads, shmem_size >> > (d_bitmap, d_spheres, NUMBER_OF_SPHERES, d_lights, NUMBER_OF_LIGHTS, WIDTH, HEIGHT, camera_pos);
-        
+        refresh_bitmap << <blocks, threads, shmem_size >> > (d_bitmap, d_spheres, NUMBER_OF_SPHERES, d_lights, NUMBER_OF_LIGHTS, WIDTH, HEIGHT, camera_pos);
         checkCudaErrors(cudaGetLastError());
-        //cudaDeviceSynchronize();
 
         checkCudaErrors(cudaDeviceSynchronize());
-        //
         cudaEventRecord(stop);
 
 

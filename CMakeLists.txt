@@ -32,4 +32,3 @@ project("CUDA_spheres" CXX CUDA)
 add_subdirectory(external/glfw)
 add_subdirectory(src)
 
-# Add optimization flags for release builds

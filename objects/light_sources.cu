@@ -49,12 +49,12 @@ void create_random_light_sources(LightSources* lights, int n)
 {
 	for (int i = 0; i < n; i++)
 	{
-		lights->x[i] = rand_float(-500, 500);
-		lights->y[i] = rand_float(-500, 500);
-		lights->z[i] = rand_float(-500, 500);
-		lights->R[i] = 1; //rand_float(0, 1);
-		lights->G[i] = 1; //rand_float(0, 1);
-		lights->B[i] = 1; //rand_float(0, 1);
+		lights->x[i] = rand_float(-1000, 1000);
+		lights->y[i] = rand_float(-1000, 1000);
+		lights->z[i] = rand_float(-1000, 1000);
+		lights->R[i] = rand_float(0, 1);
+		lights->G[i] = rand_float(0, 1);
+		lights->B[i] = rand_float(0, 1);
 		//lights->x[i] = 100;
 		//lights->y[i] = 100;
 		//lights->z[i] = 100;

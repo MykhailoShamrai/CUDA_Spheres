@@ -16,7 +16,7 @@ float3 rotate_camera_y(int angle, float3 camera_pos)
 	return make_float3(dot(camera_pos, first), dot(camera_pos, second), dot(camera_pos, third));
 }
 
-void rotate_positions_spheres_y(float* x, float* z, float* x_unrot, float* z_unrot, float angle, int n)
+void rotate_positions(float* x, float* z, float* x_unrot, float* z_unrot, float angle, int n)
 {
 	float rad_angle = angle_to_rad(angle);
 	float cos_rad = cos(rad_angle);
