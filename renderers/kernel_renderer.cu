@@ -14,9 +14,7 @@ __global__ void refresh_bitmap(unsigned char* bitmap, Spheres spheres, int ns,
 	if (i >= width || j >= heith)
 		return;
 
-     __shared__ float array[MAX];
-
-
+    __shared__ float array[MAX];
 	int is = threadIdx.x + threadIdx.y * blockDim.x;
 	int iss = is * 4;
 	while (is < ns)
@@ -30,9 +28,6 @@ __global__ void refresh_bitmap(unsigned char* bitmap, Spheres spheres, int ns,
 	}
 	__syncthreads();
 
-	// Next idea - use atomicMin, to find the minimum in every delta
-
-	// here can be an error
 	float ii = i - width / 2;
 	float jj = (j - heith / 2);
 	HitObj hit = find_intersection_gpu_ver2(ii, jj, array, ns, camera_pos, is);
@@ -54,24 +49,14 @@ __global__ void refresh_bitmap_ver2(unsigned char* bitmap, Spheres spheres,
 		return;
 
 	// The idea is to find on the start of each frame generation, which sferes can probably be visible on the block's part of the screen
-
-	//int blockX = blockIdx.x;
-	//int blockY = blockIdx.y;
 	// Find the corners to bound block's part of the screen
 	int x_min = 0 + blockIdx.x * blockDim.x - width / 2;
 	int y_max = -(0 + blockIdx.y * blockDim.y - heith / 2);
-	// Here it isn't always true
 	int x_max = blockDim.x + blockIdx.x * blockDim.x - width / 2;
 	int y_min = -(blockDim.y + blockIdx.y * blockDim.y - heith / 2);
-
-	//printf("%d, %d, %d, %d\n", x_min, y_min, x_max, y_max);
-
-
-
+	
 	// Now each thread must take one sphere and specify if it has chance to be present in this part of a screen;
 	// For that purpose I need to have some dinamically alocated structure, like list or I don't know
-
-
 	int is = threadIdx.x + threadIdx.y * blockDim.x;
 	extern __shared__ unsigned char array[];
 	while (is < ns)
@@ -79,22 +64,9 @@ __global__ void refresh_bitmap_ver2(unsigned char* bitmap, Spheres spheres,
 		check_if_sphere_is_visible_for_block(x_min, y_max, x_max, y_min, spheres.x[is],
 			spheres.y[is], spheres.z[is], spheres.radius[is], array, is, camera_pos);
 		is += blockDim.x * blockDim.y;
-		//printf("array[%d] visibility is %d in block nr %d %d\n", is, array[is], blockIdx.x, blockIdx.y);
 	}
 	__syncthreads();
-	
-	//float* x = array;
-	//float* y = &x[ns];
-	//float* z = &y[ns];
-	//float* radius = &z[ns];
 
-	//int iss = is * 4;
-	// Now each thread must take one sphere and specify if it has chance to be present in this part of a screen;
-	// For that purpose I need to have some dinamically alocated structure, like list or I don't know
-
-	// Next idea - use atomicMin, to find the minimum in every delta
-
-	// here can be an error
 	float ii = i - width / 2;
 	float jj = -(j - heith / 2);
 	HitObj hit = find_intersection_gpu_ver3(ii, jj, spheres, array, ns, camera_pos, is);
