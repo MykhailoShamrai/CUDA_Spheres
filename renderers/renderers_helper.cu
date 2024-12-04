@@ -19,7 +19,7 @@ __host__ __device__ HitObj find_intersection(float ray_x, float ray_y, Spheres s
 	float radius;
 	float3 A = make_float3(ray_x, ray_y, 0);
 	// Now hardcode the camera position as 0,0,-500
-	float3 B = normalize(A - camera_pos);
+	float3 B = cuda_examples::normalize(A - camera_pos);
 	float3 C;
 	// I have unit vector for B, so a is 1
 	float a = 1.0f;
@@ -33,9 +33,9 @@ __host__ __device__ HitObj find_intersection(float ray_x, float ray_y, Spheres s
 		C = make_float3(spheres.x[i], spheres.y[i], spheres.z[i]);
 		radius = spheres.radius[i];
 		float3 A_C = A - C;
-		b = 2 * dot(B, A_C);
-		float tmp = dot(A_C, A_C);
-		c = dot(A_C, A_C) - radius * radius;
+		b = 2 * cuda_examples::dot(B, A_C);
+		float tmp = cuda_examples::dot(A_C, A_C);
+		c = cuda_examples::dot(A_C, A_C) - radius * radius;
 		d = b * b - 4 * c;
 
 		//if (ray_x == -199 && ray_y == 200)
@@ -125,7 +125,7 @@ __device__ HitObj find_intersection_gpu_ver3(float ray_x, float ray_y, Spheres s
 	float ray_z = -1;
 	float radius;
 	float3 A = make_float3(ray_x, ray_y, 0);
-	float3 B = normalize(A - camera_pos);
+	float3 B = cuda_examples::normalize(A - camera_pos);
 	//float3 B = make_float3(0, 0, 1);
 	float3 C;
 	// I have unit vector for B, so a is 1
@@ -143,9 +143,9 @@ __device__ HitObj find_intersection_gpu_ver3(float ray_x, float ray_y, Spheres s
 		C = make_float3(spheres.x[i], spheres.y[i], spheres.z[i]);
 		radius = spheres.radius[i];
 		float3 A_C = A - C;
-		b = 2 * dot(B, A_C);
-		float tmp = dot(A_C, A_C);
-		c = dot(A_C, A_C) - radius * radius;
+		b = 2 * cuda_examples::dot(B, A_C);
+		float tmp = cuda_examples::dot(A_C, A_C);
+		c = cuda_examples::dot(A_C, A_C) - radius * radius;
 		d = b * b - 4 * c;
 		if (d >= 0)
 		{
@@ -237,9 +237,9 @@ __host__ __device__ float3 find_color_for_hit(HitObj hit, Spheres spheres, Light
 	float3 sphere_color = make_float3(spheres.R[hit.index], spheres.G[hit.index], spheres.B[hit.index]);
 	float3 hit_pos = make_float3(hit.x, hit.y, hit.z);
 	// Find normal
-	float3 N = normalize(hit_pos - sphere_center);
+	float3 N = cuda_examples::normalize(hit_pos - sphere_center);
 	// Find vector to observer
-	float3 V = normalize(observer_pos - hit_pos);
+	float3 V = cuda_examples::normalize(observer_pos - hit_pos);
 	// For each Light Source find vector to light
 	float3 light_pos = make_float3(0, 0, 0);
 	float3 light_color;
@@ -257,16 +257,16 @@ __host__ __device__ float3 find_color_for_hit(HitObj hit, Spheres spheres, Light
 		light_pos = make_float3(lights.x[k], lights.y[k], lights.z[k]);
 		light_color = make_float3(lights.R[k], lights.G[k], lights.B[k]);
 
-		L = normalize(light_pos - hit_pos);
+		L = cuda_examples::normalize(light_pos - hit_pos);
 
 		// Also here find R vector
-		R = normalize(2 * dot(L, N) * N - L);
+		R = cuda_examples::normalize(2 * cuda_examples::dot(L, N) * N - L);
 
-		LN_dot_prod = dot(L, N);
-		RV_dot_prod = dot(R, V);
+		LN_dot_prod = cuda_examples::dot(L, N);
+		RV_dot_prod = cuda_examples::dot(R, V);
 
-		LN_dot_prod = clamp(LN_dot_prod, 0.0f, 1.0f);
-		RV_dot_prod = clamp(RV_dot_prod, 0.0f, 1.0f);
+		LN_dot_prod = cuda_examples::clamp(LN_dot_prod, 0.0f, 1.0f);
+		RV_dot_prod = cuda_examples::clamp(RV_dot_prod, 0.0f, 1.0f);
 
 		color_of_pixel += kd * LN_dot_prod * sphere_color + ks * pow(RV_dot_prod, alpha) * light_color;
 	}

@@ -13,7 +13,7 @@ float3 rotate_camera_y(int angle, float3 camera_pos)
 	float3 first = make_float3(cos(rad_angle), 0, -sin(rad_angle));
 	float3 second = make_float3(0, 1, 0);
 	float3 third = make_float3(sin(rad_angle), 0, cos(rad_angle));
-	return make_float3(dot(camera_pos, first), dot(camera_pos, second), dot(camera_pos, third));
+	return make_float3(cuda_examples::dot(camera_pos, first), cuda_examples::dot(camera_pos, second), cuda_examples::dot(camera_pos, third));
 }
 
 void rotate_positions(float* x, float* z, float* x_unrot, float* z_unrot, float angle, int n)
