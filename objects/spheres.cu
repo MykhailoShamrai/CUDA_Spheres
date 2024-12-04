@@ -69,15 +69,15 @@ void create_random_spheres(Spheres* spheres, int n)
 	{
 		spheres->x[i] = rand_float(-1000, 1000);
 		spheres->y[i] = rand_float(-1000, 1000);
-		spheres->z[i] = rand_float(-1000, 1000);
+		spheres->z[i] = rand_float(-500, 500);
 		spheres->radius[i] = rand_float(10, 20);
 		spheres->R[i] = rand_float(0, 1);
 		spheres->G[i] = rand_float(0, 1);
 		spheres->B[i] = rand_float(0, 1);
-		spheres->ka[i] = 0.01;//rand_float(0, 0.3);
-		spheres->kd[i] = 0.2;
-		spheres->ks[i] = 0.8;
-		spheres->alpha[i] = 20;
+		spheres->ka[i] = rand_float(0, 1);
+		spheres->kd[i] = rand_float(0, 1);//0.2;
+		spheres->ks[i] = rand_float(0, 1);
+		spheres->alpha[i] = rand() % 200 + 1;
 	}
 }
 

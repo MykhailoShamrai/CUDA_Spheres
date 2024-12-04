@@ -14,7 +14,7 @@ void refresh_bitmap_cpu(unsigned char* bitmap, Spheres spheres,
 			HitObj hit = find_intersection(ii, jj, spheres, ns, camera_pos);
 			float3 ia = make_float3(1, 1, 1);
 			// TODO: count proper color for each 
-			float3 color = find_color_for_hit(hit, spheres, lights, nl, &ia, ii, jj);
+			float3 color = find_color_for_hit(hit, spheres, lights, nl, &ia, ii, jj, camera_pos);
 			int pos = (i + width * j) * 3; // I have 3 chars for every pixel
 			bitmap[pos] = color.x * 255;
 			bitmap[pos + 1] = color.y * 255;

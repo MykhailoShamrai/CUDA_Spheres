@@ -125,7 +125,6 @@ __device__ HitObj find_intersection_gpu_ver3(float ray_x, float ray_y, Spheres s
 	float ray_z = -1;
 	float radius;
 	float3 A = make_float3(ray_x, ray_y, 0);
-	// Now hardcode the camera position as 0,0,-500
 	float3 B = normalize(A - camera_pos);
 	//float3 B = make_float3(0, 0, 1);
 	float3 C;
@@ -226,14 +225,14 @@ __device__ HitObj find_intersection_gpu_ver3(float ray_x, float ray_y, Spheres s
 //	return res;
 //}
 
-__host__ __device__ float3 find_color_for_hit(HitObj hit, Spheres spheres, LightSources lights, int nl, float3* ia, int i, int j)
+__host__ __device__ float3 find_color_for_hit(HitObj hit, Spheres spheres, LightSources lights, int nl, float3* ia, int i, int j, float3 camera_pos)
 {
 	// If no sphere intersection is detected
 	if (hit.index == -1)
 		return make_float3(0, 0, 0);
 	// Tu jest blad dla perspektywy
 	// I shpuld add position of camera here
-	float3 observer_pos = make_float3(0, 0, -800);
+	float3 observer_pos = camera_pos;
 	float3 sphere_center = make_float3(spheres.x[hit.index], spheres.y[hit.index], spheres.z[hit.index]);
 	float3 sphere_color = make_float3(spheres.R[hit.index], spheres.G[hit.index], spheres.B[hit.index]);
 	float3 hit_pos = make_float3(hit.x, hit.y, hit.z);

@@ -10,7 +10,7 @@
 
 #define NUMBER_OF_SPHERES 1000
 #define NUMBER_OF_LIGHTS 10
-#define WIDTH 1600
+#define WIDTH 1200
 #define HEIGHT 800
 
 #define THREAD_NUMBER 16

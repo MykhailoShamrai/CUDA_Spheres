@@ -70,7 +70,7 @@ __global__ void refresh_bitmap(unsigned char* bitmap, Spheres spheres,
 	float jj = -(j - heith / 2);
 	HitObj hit = find_intersection_gpu_ver3(ii, jj, spheres, array, ns, camera_pos, is);
 	float3 ia = make_float3(1, 1, 1);
-	float3 color = find_color_for_hit(hit, spheres, lights, nl, &ia, ii, jj);
+	float3 color = find_color_for_hit(hit, spheres, lights, nl, &ia, ii, jj, camera_pos);
 	int pos = (i + width * j) * 3; // I have 3 chars for every pixel
 	bitmap[pos] = color.x * 255;
 	bitmap[pos + 1] = color.y * 255;
