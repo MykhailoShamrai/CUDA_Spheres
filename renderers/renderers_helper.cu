@@ -131,6 +131,56 @@ __device__ HitObj find_intersection_gpu_ver2(float ray_x, float ray_y, float* ar
 }
 
 
+__device__ HitObj find_intersection_gpu_ver3(float ray_x, float ray_y, Spheres spheres, unsigned char* array, int n, float3 camera_pos, int num)
+{
+	HitObj res;
+	res.x = 0;
+	res.y = 0;
+	res.z = FLT_MAX;
+	res.index = -1;
+	float ray_z = -1;
+	float radius;
+	float3 A = make_float3(ray_x, ray_y, 0);
+	// Now hardcode the camera position as 0,0,-500
+	float3 B = normalize(A - camera_pos);
+	float3 C;
+	// I have unit vector for B, so a is 1
+	float a = 1.0f;
+	float b;
+	float c;
+	float d;
+	float step1;
+	float step2;
+	for (int i = 0; i < n; i++)
+	{
+		if (array[i])
+		{
+			//printf("%d\n", array[i]);
+			C = make_float3(spheres.x[i], spheres.y[i], spheres.z[i]);
+			radius = spheres.radius[i];
+			float3 A_C = A - C;
+			b = 2 * dot(B, A_C);
+			float tmp = dot(A_C, A_C);
+			c = dot(A_C, A_C) - radius * radius;
+			d = b * b - 4 * c;
+			if (d >= 0)
+			{
+				float sqrt_d = sqrtf(d);
+				float inv2 = 0.5f;
+				float step1 = (-b - sqrt_d) * inv2;
+				float step2 = (-b + sqrt_d) * inv2;
+				// whole wphere is behind camera
+
+				bool var_a = step1 < 0 && step2 >= 0;
+				bool var_b = step1 >= 0 && step1 < res.z;
+				res.z = var_a ? FLT_MAX : var_b ? step1 : res.z;
+				res.index = var_a ? -1 : var_b ? i : res.index;
+			}
+		}
+	}
+	return res;
+}
+
 
 
 __device__ HitObj find_intersection_gpu(float ray_x, float ray_y, float* x, float* y, float* z, float* radiuses, int n, float3 camera_pos)
@@ -235,4 +285,42 @@ __host__ __device__ float3 find_color_for_hit(HitObj hit, Spheres spheres, Light
 	color_of_pixel += spheres.ka[hit.index] * (*ia);
 	color_of_pixel = clamp(color_of_pixel, make_float3(0, 0, 0), make_float3(1, 1, 1));
 	return color_of_pixel;
+}
+
+__device__ void check_if_sphere_is_visible_for_block(
+	int x_min, int y_max, int x_max, int y_min,
+	float x, float y, float z, float radius,
+	unsigned char* array, int index, float3 camera_pos)
+{
+	
+	if (z - radius <= camera_pos.z) {
+		array[index] = 0; // Not visible
+		return;
+	}
+
+	// Compute perspective projection
+	float dz = z - camera_pos.z; // Distance to the camera
+	
+
+
+	float proj_x_min = (x - radius) * fabs(camera_pos.z) / dz;
+	float proj_x_max = (x + radius) * fabs(camera_pos.z) / dz;
+	float proj_y_min = (y - radius) * fabs(camera_pos.z) / dz;
+	float proj_y_max = (y + radius) * fabs(camera_pos.z) / dz;
+
+	proj_x_min = min(proj_x_max, proj_x_min);
+	proj_y_min = min(proj_y_max, proj_y_min);
+
+	bool x_overlap = !(proj_x_max <= x_min || proj_x_min >= x_max);
+	bool y_overlap = !(proj_y_max <= y_min || proj_y_min >= y_max);
+
+	bool x_containing = (proj_x_min <= x_min && proj_x_max >= x_max);
+	bool y_containing = (proj_y_min <= y_min && proj_y_max >= y_max);
+
+	array[index] = (x_overlap && y_overlap) || (x_containing && y_overlap) ||
+		(x_overlap && y_containing) || (x_containing && y_containing) ? 1 : 0;
+
+	// Debug output
+	//printf("Index: %d, Visible: %d, ProjX: [%f, %f], ProjY: [%f, %f], ScreenX: [%d, %d], ScreenY: [%d, %d]\n",
+	//	index, array[index], proj_x_min, proj_x_max, proj_y_min, proj_y_max, x_min, x_max, y_min, y_max);
 }

@@ -8,10 +8,10 @@
 #include "camera_helpers.cuh"
 
 
-#define NUMBER_OF_SPHERES 500
-#define NUMBER_OF_LIGHTS 100
+#define NUMBER_OF_SPHERES 1000
+#define NUMBER_OF_LIGHTS 200
 #define WIDTH 1600
-#define HEIGHT 900
+#define HEIGHT 800
 
 #define THREAD_NUMBER 16
 
@@ -115,8 +115,12 @@ int main(void)
     while (!glfwWindowShouldClose(window))
     {
         cudaEventRecord(start);
-        unsigned shmem_size = sizeof(float) * 4 * NUMBER_OF_SPHERES;
-        refresh_bitmap << <blocks, threads, shmem_size>> > (d_bitmap, d_spheres, NUMBER_OF_SPHERES, d_lights, NUMBER_OF_LIGHTS, WIDTH, HEIGHT, camera_pos);
+        //unsigned shmem_size = sizeof(float) * 4 * NUMBER_OF_SPHERES;
+        //refresh_bitmap << <blocks, threads, shmem_size>> > (d_bitmap, d_spheres, NUMBER_OF_SPHERES, d_lights, NUMBER_OF_LIGHTS, WIDTH, HEIGHT, camera_pos);
+        
+        unsigned shmem_size = sizeof(unsigned char) * NUMBER_OF_SPHERES;
+        refresh_bitmap_ver2 << <blocks, threads, shmem_size >> > (d_bitmap, d_spheres, NUMBER_OF_SPHERES, d_lights, NUMBER_OF_LIGHTS, WIDTH, HEIGHT, camera_pos);
+        
         checkCudaErrors(cudaGetLastError());
         //cudaDeviceSynchronize();
 
