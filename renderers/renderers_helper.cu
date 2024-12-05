@@ -115,7 +115,7 @@ __host__ __device__ HitObj find_intersection(float ray_x, float ray_y, Spheres s
 //}
 
 
-__device__ HitObj find_intersection_gpu_ver3(float ray_x, float ray_y, Spheres spheres, unsigned char* array, int n, float3 camera_pos, int num)
+__device__ HitObj find_intersection_gpu_ver3(int ray_x, int ray_y, Spheres spheres, unsigned char* array, int n, float3 camera_pos, int num)
 {
 	HitObj res;
 	res.x = 0;
@@ -229,7 +229,7 @@ __host__ __device__ float3 find_color_for_hit(HitObj hit, Spheres spheres, Light
 {
 	// If no sphere intersection is detected
 	if (hit.index == -1)
-		return make_float3(0, 0, 0);
+		return make_float3(0.5, 0.5, 0.5);
 	// Tu jest blad dla perspektywy
 	// I shpuld add position of camera here
 	float3 observer_pos = camera_pos;
