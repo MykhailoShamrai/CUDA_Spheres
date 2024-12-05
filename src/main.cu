@@ -195,11 +195,29 @@ int main(void)
     int dim_blocks_x = (n_width + THREAD_NUMBER - 1) / THREAD_NUMBER;
     int dim_blocks_y = (n_height + THREAD_NUMBER - 1) / THREAD_NUMBER;
 
+
+    // block for framecounting
+    int number_of_frames = 0;
+    double last_time = glfwGetTime();
+
+
+
     dim3 blocks(dim_blocks_x, dim_blocks_y);
     dim3 threads(THREAD_NUMBER, THREAD_NUMBER);
     float3 new_camera_pos = camera_pos;
     while (!glfwWindowShouldClose(window))
     {
+        double current_time = glfwGetTime();
+        number_of_frames++;
+
+        if (current_time - last_time >= 1.0)
+        {
+            printf("%d\n",number_of_frames);
+            number_of_frames = 0;
+            last_time += 1.0;
+        }
+
+
         // Important for resizing a window
         if (n_width != old_width || n_height != old_height)
         {
@@ -251,9 +269,9 @@ int main(void)
 
         float elapsed_time;
         cudaEventElapsedTime(&elapsed_time, start, stop);
-        printf("time for generation of frame: %f\n", elapsed_time);
+        //printf("time for generation of frame: %f\n", elapsed_time);
         cudaEventElapsedTime(&elapsed_time, start_mem, stop_mem);
-        printf("time for memory copying: %f\n", elapsed_time);
+        //printf("time for memory copying: %f\n", elapsed_time);
 
         /* Render here */
         glClear(GL_COLOR_BUFFER_BIT);
