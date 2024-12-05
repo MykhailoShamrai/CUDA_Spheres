@@ -32,6 +32,7 @@ static bool dragging = false;
 static float angle_y = 0.0f;
 static float angle_x = 0.0f;
 
+char output_text_buffer[256];
 
 
 
@@ -199,20 +200,29 @@ int main(void)
     // block for framecounting
     int number_of_frames = 0;
     double last_time = glfwGetTime();
-
-
+    double last_time_anim = glfwGetTime();
+    int frame_rate = 0;
 
     dim3 blocks(dim_blocks_x, dim_blocks_y);
     dim3 threads(THREAD_NUMBER, THREAD_NUMBER);
     float3 new_camera_pos = camera_pos;
     while (!glfwWindowShouldClose(window))
     {
-        double current_time = glfwGetTime();
+        
         number_of_frames++;
+        double current_time = glfwGetTime();
+        if (IS_ANIMATED)
+        {
+            double time_diff = current_time - last_time_anim;
+            angle_x += time_diff * 3.0f;
+            angle_y += time_diff * 3.0f;
+        }
+        last_time_anim = current_time;
 
         if (current_time - last_time >= 1.0)
         {
-            printf("%d\n",number_of_frames);
+            frame_rate = number_of_frames;
+            //printf("%d\n",number_of_frames);
             number_of_frames = 0;
             last_time += 1.0;
         }
@@ -231,18 +241,12 @@ int main(void)
             dim_blocks_x = (n_width + THREAD_NUMBER - 1) / THREAD_NUMBER;
             dim_blocks_y = (n_height + THREAD_NUMBER - 1) / THREAD_NUMBER;
             blocks = dim3(dim_blocks_x, dim_blocks_y);
-            printf("%d, %d\n", n_width, n_height);
+            //printf("%d, %d\n", n_width, n_height);
         }
 
 
         angle_x = angle_x > 360.0f ? 0 : angle_x < -360.0f ? 0 : angle_x;
         angle_y = angle_y > 360.0f ? 0 : angle_y < -360.0f ? 0 : angle_y;
-        
-        if (IS_ANIMATED)
-        {
-            angle_x += 0.2f;
-            angle_y += 0.2f;
-        }
 
         cudaEventRecord(start);
         rotate_positions(spheres.x, spheres.z, unrotated_x_spheres, unrotated_z_spheres, angle_x, NUMBER_OF_SPHERES);
@@ -268,11 +272,14 @@ int main(void)
         checkCudaErrors(cudaMemcpy(h_bitmap, d_bitmap, n_width * n_height * 3 * sizeof(float), cudaMemcpyDeviceToHost));
 
         float elapsed_time;
+        float elapsed_time_mem;
         cudaEventElapsedTime(&elapsed_time, start, stop);
         //printf("time for generation of frame: %f\n", elapsed_time);
-        cudaEventElapsedTime(&elapsed_time, start_mem, stop_mem);
+        cudaEventElapsedTime(&elapsed_time_mem, start_mem, stop_mem);
+        sprintf(output_text_buffer, "FPS: %d :: TIME FOR MEMORY COPY %f :: TIME FOR KERNEL EXECUTION :: %f", frame_rate, elapsed_time_mem, elapsed_time);
+        
         //printf("time for memory copying: %f\n", elapsed_time);
-
+        glfwSetWindowTitle(window, output_text_buffer);
         /* Render here */
         glClear(GL_COLOR_BUFFER_BIT);
 
