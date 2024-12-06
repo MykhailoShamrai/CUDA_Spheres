@@ -1,0 +1,27 @@
+Instrukcja do programu CUDA_spheres
+
+Do zebrania projektu został wzkorzystany CMake, więc projekt można zbudować przy pomocy Visual Studio.
+
+Żeby zbudować program w Visual Studio, należy otworzyć fołder z projektem jako fołder lokalny. Po otwarciu fołderu,
+projekt zostaje zbudowany do fołderu "out" w fołderze z projektem. Żeby uruchomić program, można skorzystać z Visual Studio,
+gdzie jako target trzeba ustawić CUDA_spheres.exe z menu opcji. Zbudowanie projektu tworzy .exe plik w fołderze 
+"./out/build/x64-debug/src". Można też program wywołać z terminala;
+
+Program ma dwa parametry opcjonalne: -s i -l, gdzie -s okresla liczbę sfer i -l okresla liczbę zródeł swiatła.
+Domyślnym parametrem jest 1000 sfer i 10 źródeł światła z losowymi parametrami.
+
+Okno podstawowo pojawia się z wzmiarami 1600x800. Można zmieniać rozmiar okna, ale nowa klatka odrysuje się dopiero po 
+puszczeniu myszki, a obrazek będzie przeskalowany zgodnie z nowymi wymiarami.
+
+Program obsługuje dwa tryby działania: renderowanie na CPU i na GPU. Domyślnie jest ustawiony tryb GPU, przełączenie trybów 
+jest możliwe przy pomocy kliknięcia klawisza "c".
+
+Przy włączeniu w programie jest włączona animacja, którą można wyłączyć lub włączyć przy pomocy wciśnięcia spacji.
+Program również pozwala na ręczne obracanie sfer i świateł. Wystarczy przeciągnąć myszką po ekranie. Domyślnie 
+jest włączony tryb obracania sfer. Lewy "Shift" przełącza tryb na obracanie świateł.
+
+W tytule okna są wyświetlane informacji o przebiegu programu: Liczba klatek na sekundę, czas kopiowania pamięci z GPU do CPU
+w czasie wyświetlania oraz czas na generowanie klatki i wykonanie obrotów (czas jest podany w milisekundach).
+
+
+
