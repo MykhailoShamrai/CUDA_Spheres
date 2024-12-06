@@ -10,7 +10,7 @@
 #include <cuda_gl_interop.h>
 
 
-#define NUMBER_OF_SPHERES 10
+#define NUMBER_OF_SPHERES 1000
 #define NUMBER_OF_LIGHTS 10
 //#define WIDTH 1600
 //#define HEIGHT 800
@@ -21,8 +21,8 @@
 
 static bool IS_ANIMATED = true;
 
-static int old_width = 640;
-static int old_height = 480;
+static int old_width = 1600;
+static int old_height = 800;
 static int n_width = old_width;
 static int n_height = old_height;
 
@@ -36,7 +36,7 @@ static float angle_x_spheres = 0.0f;
 static float angle_y_lights = 0.0f;
 static float angle_x_lights = 0.0f;
 
-static bool gpu_render = false;
+static bool gpu_render = true;
 
 char output_text_buffer[256];
 
@@ -49,6 +49,10 @@ static void animation_callback(GLFWwindow* window, int key, int scancode, int ac
     else if (key == GLFW_KEY_LEFT_SHIFT && action == GLFW_PRESS)
     {
         light_rotation = !light_rotation;
+    }
+    else if (key == GLFW_KEY_C && action == GLFW_PRESS)
+    {
+        gpu_render = !gpu_render;
     }
 }
 
@@ -122,17 +126,6 @@ int main(void)
     d_allocate_memory_for_spheres(&d_spheres, NUMBER_OF_SPHERES);
     d_allocate_memory_for_light_sources(&d_lights, NUMBER_OF_LIGHTS);
 
-    float* unrotated_x_lights = (float*)malloc(sizeof(float) * NUMBER_OF_LIGHTS);
-    float* unrotated_y_lights = (float*)malloc(sizeof(float) * NUMBER_OF_LIGHTS);
-    float* unrotated_z_lights = (float*)malloc(sizeof(float) * NUMBER_OF_LIGHTS);
-    for (int i = 0; i < NUMBER_OF_LIGHTS; i++)
-    {
-        unrotated_x_lights[i] = lights.x[i];
-        unrotated_y_lights[i] = lights.y[i];
-        unrotated_z_lights[i] = lights.z[i];
-    }
-
-
     checkCudaErrors(cudaMemcpy(d_spheres.x_unrotated, spheres.x_unrotated, NUMBER_OF_SPHERES * sizeof(float), cudaMemcpyHostToDevice));
     checkCudaErrors(cudaMemcpy(d_spheres.y_unrotated, spheres.y_unrotated, NUMBER_OF_SPHERES * sizeof(float), cudaMemcpyHostToDevice));
     checkCudaErrors(cudaMemcpy(d_spheres.z_unrotated, spheres.z_unrotated, NUMBER_OF_SPHERES * sizeof(float), cudaMemcpyHostToDevice));
@@ -161,18 +154,17 @@ int main(void)
     checkCudaErrors(cudaMemcpy(d_lights.B, lights.B, NUMBER_OF_LIGHTS * sizeof(float), cudaMemcpyHostToDevice));
 
     float3 camera_pos = make_float3(0, 0, - n_width / 2);
-
-
     float* h_bitmap = (float*)malloc(n_width * n_height * 3 * sizeof(float));
     float* d_bitmap;
     checkCudaErrors(cudaMalloc((void**)&d_bitmap, n_width * n_height * 3 * sizeof(float)));
 
+
+    // Create a window and a context
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
     if (!glfwInit())
         return -1;
 
-    /* Create a windowed mode window and its OpenGL context */
-    GLFWwindow* window = glfwCreateWindow(n_width, n_height, "Test Window", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(n_width, n_height, "CUDA SPHERES", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -240,11 +232,10 @@ int main(void)
         {
             frame_rate = number_of_frames;
             number_of_frames = 0;
-            last_time += 1.0;
+            last_time = current_time;
         }
-
-
-        // Important for resizing a window
+        
+        // Check if window was resized
         if (n_width != old_width || n_height != old_height)
         {
             free(h_bitmap);
@@ -259,19 +250,11 @@ int main(void)
             blocks = dim3(dim_blocks_x, dim_blocks_y);
         }
 
-        // Rotation
-
         angle_x_spheres = angle_x_spheres > 360.0f ? 0 : angle_x_spheres < -360.0f ? 0 : angle_x_spheres;
         angle_y_spheres = angle_y_spheres > 360.0f ? 0 : angle_y_spheres < -360.0f ? 0 : angle_y_spheres;
         angle_x_lights = angle_x_lights > 360.0f ? 0 : angle_x_lights < -360.0f ? 0 : angle_x_lights;
         angle_y_lights = angle_y_lights > 360.0f ? 0 : angle_y_lights < -360.0f ? 0 : angle_y_lights;
 
-        // CPU PART
-            // Rotate
-            // DRAW
-
-
-        // CPU PART
 
         float elapsed_time = 0;
         float elapsed_time_mem = 0;
@@ -304,23 +287,27 @@ int main(void)
         }
         else
         {
-            //free(h_bitmap);
-            //h_bitmap = (float*)malloc(sizeof(float) * 3 * n_width * n_height);
             double start_rot = glfwGetTime();
             for (int i = 0; i < NUMBER_OF_SPHERES; i++)
             {
                 rotate_positions(&spheres.x[i], &spheres.z[i], &spheres.x_unrotated[i], &spheres.z_unrotated[i], angle_x_spheres);
                 rotate_positions(&spheres.y[i], &spheres.z[i], &spheres.y_unrotated[i], &spheres.z[i], angle_y_spheres);
             }
+            for (int i = 0; i < NUMBER_OF_LIGHTS; i++)
+            {
+                rotate_positions(&lights.x[i], &lights.z[i], &lights.x_unrotated[i], &lights.z_unrotated[i], angle_x_lights);
+                rotate_positions(&lights.y[i], &lights.z[i], &lights.y_unrotated[i], &lights.z[i], angle_y_lights);
+            }
             double end_rot = glfwGetTime();
-            elapsed_time_rotation = end_rot - start_rot;
-
+            elapsed_time_rotation = (end_rot - start_rot) * 1000;
+            double start_render = glfwGetTime();
             refresh_bitmap_cpu(h_bitmap, spheres, NUMBER_OF_SPHERES, lights, NUMBER_OF_LIGHTS, n_width,
                 n_height, camera_pos);
+            double end_render = glfwGetTime();
+            elapsed_time = (end_render - start_render) * 1000;
         }
-        // KERNEL PART
         
-        sprintf(output_text_buffer, "FPS: %d :: TIME FOR MEMORY COPY %f :: TIME FOR KERNEL EXECUTION :: %f :: ROTATION %f", frame_rate, elapsed_time_mem, elapsed_time, elapsed_time_rotation);
+        sprintf(output_text_buffer, "FPS: %d :: MEMORY COPY %.4f :: FRAME GENERATION FUNCTION :: %.4f :: ROTATION %.4f", frame_rate, elapsed_time_mem, elapsed_time, elapsed_time_rotation);
         
         glfwSetWindowTitle(window, output_text_buffer);
         glClear(GL_COLOR_BUFFER_BIT);
