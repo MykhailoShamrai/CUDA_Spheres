@@ -140,7 +140,7 @@ int main(int argc, char** argv)
             int num_spheres_tmp = std::stoi(val, 0, 10);
             num_spheres = num_spheres_tmp <= 0 ? NUMBER_OF_SPHERES : num_spheres_tmp;
         }
-        catch (const std::exception& e)
+        catch (const std::exception)
         {
             fprintf(stderr, "Wrong argument for number of spheres! Default number = %d is set\n", NUMBER_OF_SPHERES);
         }
@@ -154,7 +154,7 @@ int main(int argc, char** argv)
             int num_lights_tmp = std::stoi(val, 0, 10);
             num_lights = num_lights_tmp <= 0 ? NUMBER_OF_SPHERES : num_lights_tmp;
         }
-        catch (const std::exception& e)
+        catch (const std::exception)
         {
             fprintf(stderr, "Wrong argument for number of lights! Default number = %d is set\n", NUMBER_OF_LIGHTS);
         }
