@@ -6,6 +6,9 @@
 
 void h_allocate_memory_for_light_sources(LightSources* lights, int n)
 {
+	lights->x_unrotated = (float*)malloc(sizeof(float) * n);
+	lights->y_unrotated = (float*)malloc(sizeof(float) * n);
+	lights->z_unrotated = (float*)malloc(sizeof(float) * n);
 	lights->x = (float*)malloc(sizeof(float) * n);
 	lights->y = (float*)malloc(sizeof(float) * n);
 	lights->z = (float*)malloc(sizeof(float) * n);
@@ -17,6 +20,9 @@ void h_allocate_memory_for_light_sources(LightSources* lights, int n)
 
 void h_clean_memory_for_light_sources(LightSources* lights)
 {
+	free(lights->x_unrotated);
+	free(lights->y_unrotated);
+	free(lights->z_unrotated);
 	free(lights->x);
 	free(lights->y);
 	free(lights->z);
@@ -27,6 +33,9 @@ void h_clean_memory_for_light_sources(LightSources* lights)
 
 void d_allocate_memory_for_light_sources(LightSources* lights, int n)
 {
+	checkCudaErrors(cudaMalloc((void**)&(lights->x_unrotated), sizeof(float) * n));
+	checkCudaErrors(cudaMalloc((void**)&(lights->y_unrotated), sizeof(float) * n));
+	checkCudaErrors(cudaMalloc((void**)&(lights->z_unrotated), sizeof(float) * n));
 	checkCudaErrors(cudaMalloc((void**)&(lights->x), sizeof(float) * n));
 	checkCudaErrors(cudaMalloc((void**)&(lights->y), sizeof(float) * n));
 	checkCudaErrors(cudaMalloc((void**)&(lights->z), sizeof(float) * n));
@@ -37,6 +46,9 @@ void d_allocate_memory_for_light_sources(LightSources* lights, int n)
 
 void d_clean_memory_for_light_sources(LightSources* lights)
 {
+	checkCudaErrors(cudaFree(lights->x_unrotated));
+	checkCudaErrors(cudaFree(lights->y_unrotated));
+	checkCudaErrors(cudaFree(lights->z_unrotated));
 	checkCudaErrors(cudaFree(lights->x));
 	checkCudaErrors(cudaFree(lights->y));
 	checkCudaErrors(cudaFree(lights->z));
@@ -52,14 +64,11 @@ void create_random_light_sources(LightSources* lights, int n)
 		lights->x[i] = rand_float(-1000, 1000);
 		lights->y[i] = rand_float(-1000, 1000);
 		lights->z[i] = rand_float(-1000, 1000);
+		lights->x_unrotated[i] = lights->x[i];
+		lights->y_unrotated[i] = lights->y[i];
+		lights->z_unrotated[i] = lights->z[i];
 		lights->R[i] = rand_float(0, 1);
 		lights->G[i] = rand_float(0, 1);
 		lights->B[i] = rand_float(0, 1);
-		//lights->x[i] = 100;
-		//lights->y[i] = 100;
-		//lights->z[i] = 100;
-		//lights->R[i] = 1;
-		//lights->G[i] = 1;
-		//lights->B[i] = 1;
 	}
 }

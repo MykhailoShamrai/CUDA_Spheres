@@ -1,0 +1,10 @@
+^C:\USERS\MIKE\SOURCE\REPOS\CUDA_SPHERES\EXTERNAL\GLFW\SRC\CMAKELISTS.TXT
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/Mike/source/repos/CUDA_spheres -BC:/Users/Mike/source/repos/CUDA_spheres --check-stamp-file C:/Users/Mike/source/repos/CUDA_spheres/external/glfw/src/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
