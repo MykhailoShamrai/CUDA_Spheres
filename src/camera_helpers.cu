@@ -15,7 +15,6 @@ __host__ __device__ void rotate_positions(float* x, float* z, float* x_unrot, fl
 	float rad_angle = angle_to_rad(angle);
 	float cos_rad = cos(rad_angle);
 	float sin_rad = sin(rad_angle);
-	//float3 third = make_float3(sin(rad_angle), 0, cos(rad_angle));
 	*x = cos_rad * *x_unrot + -sin_rad * *z_unrot;
 	*z = sin_rad * *x_unrot + cos_rad * *z_unrot;
 }
