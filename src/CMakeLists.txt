@@ -1,7 +1,8 @@
 ﻿# CMakeList.txt : CMake project for cmake-autogen, include source and define
 # project specific logic here.
 #
-find_package(CUDAToolkit REQUIRED)
+find_package(CUDA REQUIRED)
+include_directories(${CUDA_INCLUDE_DIRS})
 
 
 find_package(OpenGL REQUIRED)
