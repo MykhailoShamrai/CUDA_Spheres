@@ -1,30 +1,39 @@
 #include "camera_helpers.cuh"
+#include <cuda_runtime.h>
+#include <device_launch_parameters.h>
 #include <math.h>
 #define M_PI acos(-1.0)
 
-float angle_to_rad(float angle)
+__host__ __device__ float angle_to_rad(float angle)
 {
 	return (M_PI * angle / 180);
 }
 
-float3 rotate_camera_y(int angle, float3 camera_pos)
-{
-	float rad_angle = angle_to_rad(angle);
-	float3 first = make_float3(cos(rad_angle), 0, -sin(rad_angle));
-	float3 second = make_float3(0, 1, 0);
-	float3 third = make_float3(sin(rad_angle), 0, cos(rad_angle));
-	return make_float3(cuda_examples::dot(camera_pos, first), cuda_examples::dot(camera_pos, second), cuda_examples::dot(camera_pos, third));
-}
 
-void rotate_positions(float* x, float* z, float* x_unrot, float* z_unrot, float angle, int n)
+__host__ __device__ void rotate_positions(float* x, float* z, float* x_unrot, float* z_unrot, float angle)
 {
 	float rad_angle = angle_to_rad(angle);
 	float cos_rad = cos(rad_angle);
 	float sin_rad = sin(rad_angle);
-	float3 third = make_float3(sin(rad_angle), 0, cos(rad_angle));
-	for (int i = 0; i < n; i++)
+	//float3 third = make_float3(sin(rad_angle), 0, cos(rad_angle));
+	*x = cos_rad * *x_unrot + -sin_rad * *z_unrot;
+	*z = sin_rad * *x_unrot + cos_rad * *z_unrot;
+}
+
+__global__ void rotate_objects(Spheres spheres, LightSources lights, float angle_x_spheres, float angle_y_spheres, float angle_x_lights, 
+	float angle_y_lights, int ns, int nl)
+{
+	int i = threadIdx.x + blockIdx.x * blockDim.x;
+	if (i < ns)
 	{
-		x[i] = cos_rad * x_unrot[i] + (-sin_rad * z_unrot[i]);
-		z[i] = sin_rad * x_unrot[i] + cos_rad * z_unrot[i];
+		rotate_positions(&(spheres.x[i]), &(spheres.z[i]), &(spheres.x_unrotated[i]), &(spheres.z_unrotated[i]), angle_x_spheres);
+		rotate_positions(&(spheres.y[i]), &(spheres.z[i]), &(spheres.y_unrotated[i]), &(spheres.z[i]), angle_y_spheres);
+	}
+
+	// I assume that we have more spheres than lights
+	if (i < nl)
+	{
+		rotate_positions(&(lights.x[i]), &(lights.z[i]), &(lights.x_unrotated[i]), &(lights.z_unrotated[i]), angle_x_lights);
+		rotate_positions(&(lights.y[i]), &(lights.z[i]), &(lights.y_unrotated[i]), &(lights.z[i]), angle_y_lights);
 	}
 }

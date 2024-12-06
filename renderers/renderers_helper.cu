@@ -61,59 +61,6 @@ __host__ __device__ HitObj find_intersection(float ray_x, float ray_y, Spheres s
 	}
 	return res;
 }
-//
-//
-//
-//
-//
-//__device__ HitObj find_intersection_gpu_ver2(float ray_x, float ray_y, float* arr, int n, float3 camera_pos, int num)
-//{
-//	HitObj res;
-//	res.x = 0;
-//	res.y = 0;
-//	res.z = FLT_MAX;
-//	res.index = -1;
-//	float ray_z = -1;
-//	float radius;
-//	float3 A = make_float3(ray_x, ray_y, 0);
-//	// Now hardcode the camera position as 0,0,-500
-//	float3 B = normalize(A - camera_pos);
-//	float3 C;
-//	// I have unit vector for B, so a is 1
-//	float a = 1.0f;
-//	float b;
-//	float c;
-//	float d;
-//	int i = 0;
-//	//int dtmp = num % n;
-//	while (i < n)
-//	{
-//		int offset = i * 4;
-//		C = make_float3(arr[offset], arr[offset + 1], arr[offset + 2]);
-//		radius = arr[offset + 3];
-//		float3 A_C = A - C;
-//		b = 2 * dot(B, A_C);
-//		c = dot(A_C, A_C) - radius * radius;
-//		d = b * b - 4 * c;
-//
-//		if (d >= 0)
-//		{
-//			float sqrt_d = sqrtf(d);
-//			float inv2 = 0.5f;
-//			float step1 = (-b - sqrt_d) * inv2;
-//			float step2 = (-b + sqrt_d) * inv2;
-//			// whole wphere is behind camera
-//
-//			bool var_a = step1 < 0 && step2 >= 0;
-//			bool var_b = step1 >= 0 && step1 < res.z;
-//			res.z = var_a ? FLT_MAX : var_b ? step1 : res.z;
-//			res.index = var_a ? -1 : var_b ? i : res.index;
-//		}
-//		i++;
-//	}
-//	return res;
-//}
-
 
 __device__ HitObj find_intersection_gpu_ver3(int ray_x, int ray_y, Spheres spheres, unsigned char* array, int n, float3 camera_pos, int num)
 {
@@ -157,10 +104,10 @@ __device__ HitObj find_intersection_gpu_ver3(int ray_x, int ray_y, Spheres spher
 
 			bool var_a = step1 < 0 && step2 >= 0;
 			bool var_b = step1 >= 0 && step1 < res.z;
-			res.z = var_a ? FLT_MAX : var_b ? A.z + step1 * B.z : res.z;
-			res.x = var_a ? 0 : var_b ? A.x + step1 * B.x : res.x;
-			res.y = var_a ? 0 : var_b ? A.y + step1 * B.y : res.y;
-			res.index = var_a ? -1 : var_b ? i : res.index;
+			res.z = var_b ? A.z + step1 * B.z : res.z;
+			res.x = var_b ? A.x + step1 * B.x : res.x;
+			res.y = var_b ? A.y + step1 * B.y : res.y;
+			res.index = var_b ? i : res.index;		
 		}
 		i++;
 		while (array[i] != 1 && i < n)
@@ -171,65 +118,11 @@ __device__ HitObj find_intersection_gpu_ver3(int ray_x, int ray_y, Spheres spher
 	return res;
 }
 
-
-
-//__device__ HitObj find_intersection_gpu(float ray_x, float ray_y, float* x, float* y, float* z, float* radiuses, int n, float3 camera_pos)
-//{
-//	HitObj res;
-//	res.x = 0;
-//	res.y = 0;
-//	res.z = FLT_MAX;
-//	res.index = -1;
-//	float ray_z = -1;
-//	float radius;
-//	float3 A = make_float3(ray_x, ray_y, 0);
-//	// Now hardcode the camera position as 0,0,-500
-//	// float3 B = normalize(A - camera_pos);
-//	float3 B = make_float3(0, 0, 1);
-//	float3 C;
-//	// I have unit vector for B, so a is 1
-//	float a = 1.0f;
-//	float b;
-//	float c;
-//	float d;
-//	float step1;
-//	float step2;
-//	for (int i = 0; i < n; i++)
-//	{
-//		C = make_float3(x[i], y[i], z[i]);
-//		radius = radiuses[i];
-//		float3 A_C = A - C;
-//		b = 2 * dot(B, A_C);
-//		c = dot(A_C, A_C) - radius * radius;
-//		d = b * b - 4 * c;
-//
-//		if (d >= 0)
-//		{
-//			step1 = (-b - sqrt(d)) / 2;
-//			step2 = (-b + sqrt(d)) / 2;
-//			// whole wphere is behind camera
-//			if (step1 >= 0 && step1 < res.z)
-//			{
-//				res.z = step1;
-//				res.index = i;
-//			}
-//			// camera is inside a sphere
-//			else if (step1 < 0 && step2 >= 0)
-//			{
-//				res.z = FLT_MAX;
-//				res.index = -1;
-//				break;
-//			}
-//		}
-//	}
-//	return res;
-//}
-
-__host__ __device__ float3 find_color_for_hit(HitObj hit, Spheres spheres, LightSources lights, int nl, float3* ia, int i, int j, float3 camera_pos)
+__host__ __device__ float3 find_color_for_hit(HitObj hit, Spheres spheres, LightSources lights, int nl, int i, int j, float3 camera_pos)
 {
 	// If no sphere intersection is detected
 	if (hit.index == -1)
-		return make_float3(0.5, 0.5, 0.5);
+		return make_float3(0, 0, 0);
 	// Tu jest blad dla perspektywy
 	// I shpuld add position of camera here
 	float3 observer_pos = camera_pos;
@@ -279,13 +172,12 @@ __host__ __device__ float3 find_color_for_hit(HitObj hit, Spheres spheres, Light
 	return color_of_pixel;
 }
 
-__device__ void check_if_sphere_is_visible_for_block(
-	int x_min, int y_max, int x_max, int y_min,
-	float x, float y, float z, float radius,
+
+__device__ void check_if_sphere_is_visible_for_block(int x_min, int y_max, int x_max, int y_min, float x, float y, float z, float radius,
 	unsigned char* array, int index, float3 camera_pos)
 {
 	
-	if (z - radius <= camera_pos.z) {
+	if (z + radius < 0) {
 		array[index] = 0; // Not visible
 		return;
 	}
@@ -324,8 +216,7 @@ __device__ void check_if_sphere_is_visible_for_block_ver2(
 	float x, float y, float z, float radius,
 	unsigned char* array, int index, float3 camera_pos)
 {
-
-	if (z - radius <= 0) {
+	if (z + radius < 0) {
 		array[index] = 0; // Not visible
 		return;
 	}

@@ -2,9 +2,14 @@
 
 struct Spheres
 {
+	float* x_unrotated;
+	float* y_unrotated;
+	float* z_unrotated;
+		
 	float* x;
 	float* y;
 	float* z;
+
 	float* radius;
 
 	float* R;

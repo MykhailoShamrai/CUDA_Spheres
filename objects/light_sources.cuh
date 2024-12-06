@@ -2,6 +2,10 @@
 
 struct LightSources
 {
+	float* x_unrotated;
+	float* y_unrotated;
+	float* z_unrotated;
+
 	float* x;
 	float* y;
 	float* z;
