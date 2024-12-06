@@ -11,7 +11,7 @@ endif()
 
 #set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -rdc=true")
 # Project Configuration
-project("CUDA_spheres" CXX CUDA)
+project("CUDA_spheres" C CXX CUDA)
 add_subdirectory(external/glfw)
 add_subdirectory(src)
 

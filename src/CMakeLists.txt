@@ -50,8 +50,8 @@ set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 
 
 find_package(CUDA REQUIRED)
-
 include_directories(${CUDA_INCLUDE_DIRS})
+
 
 find_package(OpenGL REQUIRED)
 # Include directories

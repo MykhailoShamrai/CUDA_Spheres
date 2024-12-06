@@ -118,6 +118,60 @@ __device__ HitObj find_intersection_gpu_ver3(int ray_x, int ray_y, Spheres spher
 	return res;
 }
 
+
+
+HitObj find_intersection_cpu(float ray_x, float ray_y, Spheres spheres, int n, float3 camera_pos, std::vector<int> interesting_spheres_indices)
+{
+	HitObj res;
+	res.x = 0;
+	res.y = 0;
+	res.z = FLT_MAX;
+	res.index = -1;
+	float ray_z = -1;
+	float radius;
+	float3 A = make_float3(ray_x, ray_y, 0);
+	float3 B = cuda_examples::normalize(A - camera_pos);
+	//float3 B = make_float3(0, 0, 1);
+	float3 C;
+	// I have unit vector for B, so a is 1
+	float a = 1.0f;
+	float b;
+	float c;
+	float d;
+	float step1;
+	float step2;
+	int i = 0;
+	// Only for spheres, that can be in this block
+	std::vector<int>::iterator it;
+	for (it = interesting_spheres_indices.begin(); it != interesting_spheres_indices.end(); it++)
+	{
+		i = *it;
+		C = make_float3(spheres.x[i], spheres.y[i], spheres.z[i]);
+		radius = spheres.radius[i];
+		float3 A_C = A - C;
+		b = 2 * cuda_examples::dot(B, A_C);
+		float tmp = cuda_examples::dot(A_C, A_C);
+		c = cuda_examples::dot(A_C, A_C) - radius * radius;
+		d = b * b - 4 * c;
+		if (d >= 0)
+		{
+			float sqrt_d = sqrtf(d);
+			float inv2 = 0.5f;
+			float step1 = (-b - sqrt_d) * inv2;
+			float step2 = (-b + sqrt_d) * inv2;
+			// whole wphere is behind camera
+
+			bool var_a = step1 < 0 && step2 >= 0;
+			bool var_b = step1 >= 0 && step1 < res.z;
+			res.z = var_b ? A.z + step1 * B.z : res.z;
+			res.x = var_b ? A.x + step1 * B.x : res.x;
+			res.y = var_b ? A.y + step1 * B.y : res.y;
+			res.index = var_b ? i : res.index;
+		}
+	}
+	return res;
+}
+
 __host__ __device__ float3 find_color_for_hit(HitObj hit, Spheres spheres, LightSources lights, int nl, int i, int j, float3 camera_pos)
 {
 	// If no sphere intersection is detected
@@ -170,6 +224,44 @@ __host__ __device__ float3 find_color_for_hit(HitObj hit, Spheres spheres, Light
 	color_of_pixel.z = color_of_pixel.z >= 0 ? (color_of_pixel.z <= 1 ? color_of_pixel.z : 1) : 0;
 	//color_of_pixel = clamp(color_of_pixel, make_float3(0, 0, 0), make_float3(1, 1, 1));
 	return color_of_pixel;
+}
+
+
+
+
+void check_if_sphere_is_visible_for_block_cpu(int x_min, int y_max, int x_max, int y_min, float x, float y, float z, float radius, int index, float3 camera_pos, std::vector<int>* interesting_spheres_indices)
+{
+	if (z + radius < 0)
+	{
+		return;
+	}
+
+
+	float dz = z - camera_pos.z;
+	float cam = fabs(camera_pos.z);
+	float x_min_rad = x - radius;
+	float x_pl_rad = x + radius;
+	float y_min_rad = y - radius;
+	float y_pl_rad = y + radius;
+	float dz_min_rad = dz - radius;
+	float dz_pl_rad = dz + radius;
+
+	float proj_x_min = x_min_rad < 0 ? x_min_rad * cam / dz_min_rad : x_min_rad * cam / dz_pl_rad;
+	float proj_x_max = x_pl_rad < 0 ? x_pl_rad * cam / dz_pl_rad : x_pl_rad * cam / dz_min_rad;
+	float proj_y_min = y_min_rad < 0 ? y_min_rad * cam / dz_min_rad : y_min_rad * cam / dz_pl_rad;
+	float proj_y_max = y_pl_rad < 0 ? y_pl_rad * cam / dz_pl_rad : y_pl_rad * cam / dz_min_rad;
+
+	bool x_overlap = !(proj_x_max <= x_min || proj_x_min >= x_max);
+	bool y_overlap = !(proj_y_max <= y_min || proj_y_min >= y_max);
+
+	bool x_containing = (proj_x_min <= x_min && proj_x_max >= x_max);
+	bool y_containing = (proj_y_min <= y_min && proj_y_max >= y_max);
+
+	if ((x_overlap && y_overlap) || (x_containing && y_overlap) ||
+		(x_overlap && y_containing) || (x_containing && y_containing))
+	{
+		(*interesting_spheres_indices).push_back(index);
+	}
 }
 
 

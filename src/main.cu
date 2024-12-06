@@ -7,9 +7,10 @@
 #include <cuda_runtime.h>
 #include "camera_helpers.cuh"
 #include <stdio.h>
+#include <cuda_gl_interop.h>
 
 
-#define NUMBER_OF_SPHERES 1000
+#define NUMBER_OF_SPHERES 10
 #define NUMBER_OF_LIGHTS 10
 //#define WIDTH 1600
 //#define HEIGHT 800
@@ -20,8 +21,8 @@
 
 static bool IS_ANIMATED = true;
 
-static int old_width = 1600;
-static int old_height = 800;
+static int old_width = 640;
+static int old_height = 480;
 static int n_width = old_width;
 static int n_height = old_height;
 
@@ -34,6 +35,8 @@ static float angle_y_spheres = 0.0f;
 static float angle_x_spheres = 0.0f;
 static float angle_y_lights = 0.0f;
 static float angle_x_lights = 0.0f;
+
+static bool gpu_render = false;
 
 char output_text_buffer[256];
 
@@ -115,11 +118,9 @@ int main(void)
 
     h_allocate_memory_for_light_sources(&lights, NUMBER_OF_LIGHTS);
     create_random_light_sources(&lights, NUMBER_OF_LIGHTS);
-    
-
+   
     d_allocate_memory_for_spheres(&d_spheres, NUMBER_OF_SPHERES);
     d_allocate_memory_for_light_sources(&d_lights, NUMBER_OF_LIGHTS);
-
 
     float* unrotated_x_lights = (float*)malloc(sizeof(float) * NUMBER_OF_LIGHTS);
     float* unrotated_y_lights = (float*)malloc(sizeof(float) * NUMBER_OF_LIGHTS);
@@ -186,13 +187,14 @@ int main(void)
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
+    glGetString(GL_VERSION);
 
     glfwSetKeyCallback(window, animation_callback);
     glfwSetMouseButtonCallback(window, mouse_button_callback);
     glfwSetCursorPosCallback(window, cursor_position_callback);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    
 
+    
 
     // Initialisation of timers
     cudaEvent_t start, stop;
@@ -205,7 +207,6 @@ int main(void)
     cudaEventCreate(&start_rotate);
     cudaEventCreate(&stop_rotate);
 
-    // 
     int dim_blocks_x = (n_width + THREAD_NUMBER - 1) / THREAD_NUMBER;
     int dim_blocks_y = (n_height + THREAD_NUMBER - 1) / THREAD_NUMBER;
 
@@ -224,7 +225,7 @@ int main(void)
     //float3 new_camera_pos = camera_pos;
     while (!glfwWindowShouldClose(window))
     {
-        
+       
         number_of_frames++;
         double current_time = glfwGetTime();
         if (IS_ANIMATED)
@@ -238,7 +239,6 @@ int main(void)
         if (current_time - last_time >= 1.0)
         {
             frame_rate = number_of_frames;
-            //printf("%d\n",number_of_frames);
             number_of_frames = 0;
             last_time += 1.0;
         }
@@ -266,46 +266,69 @@ int main(void)
         angle_x_lights = angle_x_lights > 360.0f ? 0 : angle_x_lights < -360.0f ? 0 : angle_x_lights;
         angle_y_lights = angle_y_lights > 360.0f ? 0 : angle_y_lights < -360.0f ? 0 : angle_y_lights;
 
+        // CPU PART
+            // Rotate
+            // DRAW
+
+
+        // CPU PART
+
+        float elapsed_time = 0;
+        float elapsed_time_mem = 0;
+        float elapsed_time_rotation = 0;
         // KERNEL PART
+        if (gpu_render)
+        {
+            cudaEventRecord(start_rotate);
+            rotate_objects << <blocks_for_rotation, THREAD_ROTATE_NUMBER >> > (d_spheres, d_lights, angle_x_spheres, angle_y_spheres, angle_x_lights, angle_y_lights,
+                NUMBER_OF_SPHERES, NUMBER_OF_LIGHTS);
+            checkCudaErrors(cudaGetLastError());
+            checkCudaErrors(cudaDeviceSynchronize());
+            cudaEventRecord(stop_rotate);
+            cudaEventRecord(start);
+            
+            unsigned shmem_size = sizeof(unsigned char) * NUMBER_OF_SPHERES;
+            refresh_bitmap << <blocks, threads, shmem_size >> > (d_bitmap, d_spheres, NUMBER_OF_SPHERES, d_lights, NUMBER_OF_LIGHTS,
+                n_width, n_height, camera_pos);
+            checkCudaErrors(cudaGetLastError());
+            checkCudaErrors(cudaDeviceSynchronize());
+            cudaEventRecord(stop);
+            
+            cudaEventRecord(start_mem);
+            checkCudaErrors(cudaMemcpy(h_bitmap, d_bitmap, n_width * n_height * 3 * sizeof(float), cudaMemcpyDeviceToHost));
+            cudaEventRecord(stop_mem);
+            cudaEventElapsedTime(&elapsed_time, start, stop);
+            cudaEventElapsedTime(&elapsed_time_mem, start_mem, stop_mem);
+            cudaEventElapsedTime(&elapsed_time_rotation, start_rotate, stop_rotate);
+           
+        }
+        else
+        {
+            //free(h_bitmap);
+            //h_bitmap = (float*)malloc(sizeof(float) * 3 * n_width * n_height);
+            double start_rot = glfwGetTime();
+            for (int i = 0; i < NUMBER_OF_SPHERES; i++)
+            {
+                rotate_positions(&spheres.x[i], &spheres.z[i], &spheres.x_unrotated[i], &spheres.z_unrotated[i], angle_x_spheres);
+                rotate_positions(&spheres.y[i], &spheres.z[i], &spheres.y_unrotated[i], &spheres.z[i], angle_y_spheres);
+            }
+            double end_rot = glfwGetTime();
+            elapsed_time_rotation = end_rot - start_rot;
 
-        cudaEventRecord(start_rotate);
-        rotate_objects << <blocks_for_rotation, THREAD_ROTATE_NUMBER >> > (d_spheres, d_lights, angle_x_spheres, angle_y_spheres, angle_x_lights, angle_y_lights,
-            NUMBER_OF_SPHERES, NUMBER_OF_LIGHTS);
-        checkCudaErrors(cudaGetLastError());
-        checkCudaErrors(cudaDeviceSynchronize());
-        cudaEventRecord(stop_rotate);
-        cudaEventRecord(start);
-
-        unsigned shmem_size = sizeof(unsigned char) * NUMBER_OF_SPHERES;
-        refresh_bitmap << <blocks, threads, shmem_size >> > (d_bitmap, d_spheres, NUMBER_OF_SPHERES, d_lights, NUMBER_OF_LIGHTS,
-            n_width, n_height, camera_pos);
-        checkCudaErrors(cudaGetLastError());
-        checkCudaErrors(cudaDeviceSynchronize());
-        cudaEventRecord(stop);
-
-
-        cudaEventRecord(start_mem);
-        checkCudaErrors(cudaMemcpy(h_bitmap, d_bitmap, n_width * n_height * 3 * sizeof(float), cudaMemcpyDeviceToHost));
-        cudaEventRecord(stop_mem);
-
+            refresh_bitmap_cpu(h_bitmap, spheres, NUMBER_OF_SPHERES, lights, NUMBER_OF_LIGHTS, n_width,
+                n_height, camera_pos);
+        }
         // KERNEL PART
-
-        float elapsed_time;
-        float elapsed_time_mem;
-        float elapsed_time_rotation;
-        cudaEventElapsedTime(&elapsed_time, start, stop);
-        cudaEventElapsedTime(&elapsed_time_mem, start_mem, stop_mem);
-        cudaEventElapsedTime(&elapsed_time_rotation, start_rotate, stop_rotate);
+        
         sprintf(output_text_buffer, "FPS: %d :: TIME FOR MEMORY COPY %f :: TIME FOR KERNEL EXECUTION :: %f :: ROTATION %f", frame_rate, elapsed_time_mem, elapsed_time, elapsed_time_rotation);
         
         glfwSetWindowTitle(window, output_text_buffer);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        /* Swap front and back buffers */
+        
         glDrawPixels(n_width, n_height, GL_RGB, GL_FLOAT, h_bitmap);
         glfwSwapBuffers(window);
 
-        /* Poll for and process events */
         glfwPollEvents();
 
     }
