@@ -1,63 +1,35 @@
 ﻿# CMakeList.txt : CMake project for cmake-autogen, include source and define
 # project specific logic here.
 #
-find_package(CUDA REQUIRED)
-include_directories(${CUDA_INCLUDE_DIRS})
 
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CUDA_STANDARD 20)
+
+file(GLOB_RECURSE SOURCES
+        "${CMAKE_SOURCE_DIR}/includes/*.cu"
+        "${CMAKE_SOURCE_DIR}/objects/*.cu"
+        "${CMAKE_SOURCE_DIR}/renderers/*.cu"
+        "${CMAKE_SOURCE_DIR}/src/*.cu"
+)
+
+add_executable(CUDA_spheres
+    ${SOURCES}
+)
+
+set_target_properties(CUDA_spheres PROPERTIES
+        CUDA_SEPARABLE_COMPILATION ON
+)
 
 find_package(OpenGL REQUIRED)
-# Include directories
 
-
-
-
-add_library(renderers_helper STATIC 
-    ../renderers/renderers_helper.cu
-    ../renderers/renderers_helper.cuh
-)
-set_target_properties(renderers_helper PROPERTIES
-    CUDA_SEPARABLE_COMPILATION ON
+target_link_libraries(CUDA_spheres PRIVATE
+        glfw
+        OpenGL::GL
 )
 
-add_library(cpu_renderer STATIC ../renderers/cpu_renderer.cuh ../renderers/cpu_renderer.cu)
-
-set_target_properties(cpu_renderer PROPERTIES
-    CUDA_SEPARABLE_COMPILATION ON
+target_include_directories(CUDA_spheres PRIVATE
+        ${CMAKE_SOURCE_DIR}/includes
+        ${CMAKE_SOURCE_DIR}/objects
+        ${CMAKE_SOURCE_DIR}/renderers
+        ${CMAKE_SOURCE_DIR}/src
 )
-
-target_link_libraries(cpu_renderer PRIVATE renderers_helper)
-
-add_library(kernel_renderer STATIC ../renderers/kernel_renderer.cuh ../renderers/kernel_renderer.cu)
-
-set_target_properties(kernel_renderer PROPERTIES
-    CUDA_SEPARABLE_COMPILATION ON
-)
-
-target_link_libraries(kernel_renderer PRIVATE renderers_helper)
-
-add_executable (CUDA_spheres main.cu
-../objects/spheres.cu
-../includes/cuda_helper.cu
-../objects/light_sources.cu
-camera_helpers.cu
-)
-
-target_link_libraries(CUDA_spheres PRIVATE cpu_renderer kernel_renderer renderers_helper)
-
-if (CMAKE_VERSION VERSION_GREATER 3.12)
-  set_property(TARGET CUDA_spheres PROPERTY CXX_STANDARD 20)
-endif()
-
-
-# GLFW Configuration
-set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-
-
-target_include_directories(CUDA_spheres PRIVATE ../external/glfw/include)
-target_link_libraries(CUDA_spheres PRIVATE glfw OpenGL::GL)
-include_directories(
-    ../includes
-    ../objects
-    ../renderers)

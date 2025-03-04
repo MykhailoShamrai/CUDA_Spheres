@@ -23,8 +23,8 @@
 
 static bool IS_ANIMATED = true;
 
-static int old_width = 1600;
-static int old_height = 800;
+static int old_width = 1200;
+static int old_height = 600;
 static int n_width = old_width;
 static int n_height = old_height;
 
