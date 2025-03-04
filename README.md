@@ -33,5 +33,5 @@ Ensure the following dependencies are installed before building the project:
   - `LEFT SHIFT`: Toggle light rotation.
   - `C`: Toggle rendering mode.
 
-![Program preview](images/image.png)
+![Program preview](images/spheres_preview.png)
 
